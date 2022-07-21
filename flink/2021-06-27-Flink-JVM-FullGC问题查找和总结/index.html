@@ -1,0 +1,880 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/lxz_head.png">
+  <link rel="icon" href="/img/lxz_head.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="e-miao">
+  <meta name="keywords" content="Flink JVM FullGC">
+  
+    <meta name="description" content="Flink Taskmanager JVM FullGC">
+<meta property="og:type" content="article">
+<meta property="og:title" content="记一次线上Flink-JVM-FullGC问题总结">
+<meta property="og:url" content="https://e-miao.github.io/flink/2021-06-27-Flink-JVM-FullGC%E9%97%AE%E9%A2%98%E6%9F%A5%E6%89%BE%E5%92%8C%E6%80%BB%E7%BB%93/index.html">
+<meta property="og:site_name" content="e-miao">
+<meta property="og:description" content="Flink Taskmanager JVM FullGC">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://e-miao.github.io/img/logo/flink.png">
+<meta property="article:published_time" content="2021-06-27T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-06-27T00:00:00.000Z">
+<meta property="article:author" content="e-miao">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://e-miao.github.io/img/logo/flink.png">
+  
+  
+  
+  <title>记一次线上Flink-JVM-FullGC问题总结 - e-miao</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"e-miao.github.io","root":"/","version":"1.9.2","typing":{"enable":true,"typeSpeed":60,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 50vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>e-miao</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/friends/">
+                <i class="iconfont icon-link-fill"></i>
+                友链
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="记一次线上Flink-JVM-FullGC问题总结"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-06-27 00:00" pubdate>
+          2021年6月27日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          8.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          68 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">记一次线上Flink-JVM-FullGC问题总结</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="背景和现象"><a href="#背景和现象" class="headerlink" title="背景和现象"></a>背景和现象</h1><p>目前公司线上数据量小，线上环境采用standlone模式部署的taskmanager，通过zabbix监控看到，taskmanager每5-10分钟有一次fullgc问题。<br>推测： </p>
+<ol>
+<li>代码问题，有对象使用后没有做进行关闭或回收</li>
+<li>JVM参数配置问题</li>
+</ol>
+<h1 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h1><p>先说结论，通过阅读项目代码，发现写入mysql和clickhouse的api代码存在问题， statement，connection再使用完毕后没有关闭，以及类似的问题。<br>因为插入数据库时使用的是批量插入，这部分存在很大问题。（备注：刚进入公司，代码非本人编写。） 这证明了推测1。</p>
+<p>观察线上环境的jvm参数配置 ，发现jvm中新生代内存配置不合理。8G的堆内存，只有332M的新生代，不符合3&#x2F;8常规配比，证明了推测2.</p>
+<p>JVM配置参考 <a target="_blank" rel="noopener" href="https://www.huaweicloud.com/articles/b86de23d6c3d5a161b25b1013a388d8d.html">https://www.huaweicloud.com/articles/b86de23d6c3d5a161b25b1013a388d8d.html</a></p>
+<h1 id="解决步骤"><a href="#解决步骤" class="headerlink" title="解决步骤"></a>解决步骤</h1><ol>
+<li>代码部分：<br>只展示部分<br><strong>Connection和PreparedStatement</strong></li>
+</ol>
+<div class="code-wrapper"><pre><code class="hljs java">
+<span class="hljs-type">Connection</span> <span class="hljs-variable">connection</span> <span class="hljs-operator">=</span> <span class="hljs-literal">null</span>;
+<span class="hljs-keyword">try</span> &#123;
+    connection = pool.getConnection();
+    connection.setAutoCommit(<span class="hljs-literal">false</span>);
+    <span class="hljs-type">PreparedStatement</span> <span class="hljs-variable">prest</span> <span class="hljs-operator">=</span> connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+    <span class="hljs-keyword">for</span>(Map.Entry&lt;String, Long&gt; entry : metrics.entrySet()) &#123;
+        prest.setLong(<span class="hljs-number">1</span>, entry.getValue()/<span class="hljs-number">1000</span>);
+        prest.setString(<span class="hljs-number">2</span>, entry.getKey());
+        prest.setInt(<span class="hljs-number">3</span>, Integer.parseInt(productId));
+        prest.addBatch();
+    &#125;
+    prest.executeBatch();
+    connection.commit();
+&#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;
+    connection.rollback();
+    System.err.println(sql);
+    System.err.println(e);
+    <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Exception</span>(e.getMessage());
+&#125; <span class="hljs-keyword">finally</span> &#123;
+    <span class="hljs-keyword">if</span> (connection != <span class="hljs-literal">null</span>) &#123;
+        <span class="hljs-keyword">try</span> &#123;
+            connection.close();
+        &#125; <span class="hljs-keyword">catch</span> (SQLException throwables) &#123;
+            throwables.printStackTrace();
+        &#125;
+    &#125;
+&#125;
+</code></pre></div>
+
+<p>修改后：</p>
+<div class="code-wrapper"><pre><code class="hljs java">
+<span class="hljs-type">Connection</span> <span class="hljs-variable">connection</span> <span class="hljs-operator">=</span> <span class="hljs-literal">null</span>;
+<span class="hljs-type">PreparedStatement</span> <span class="hljs-variable">prest</span> <span class="hljs-operator">=</span> <span class="hljs-literal">null</span>;
+<span class="hljs-keyword">try</span> &#123;
+    connection = pool.getConnection();
+    connection.setAutoCommit(<span class="hljs-literal">false</span>);
+    prest = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+    <span class="hljs-keyword">for</span> (Map.Entry&lt;String, Long&gt; entry : metrics.entrySet()) &#123;
+        prest.setLong(<span class="hljs-number">1</span>, entry.getValue() / <span class="hljs-number">1000</span>);
+        prest.setString(<span class="hljs-number">2</span>, entry.getKey().substring(<span class="hljs-number">3</span>));
+        prest.setInt(<span class="hljs-number">3</span>, Integer.parseInt(productId));
+        prest.addBatch();
+    &#125;
+    prest.executeBatch();
+    connection.commit();
+    prest.clearParameters();
+&#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;
+    connection.rollback();
+    System.err.println(sql);
+    System.err.println(e);
+    <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Exception</span>(e.getMessage());
+&#125; <span class="hljs-keyword">finally</span> &#123;
+    <span class="hljs-keyword">if</span> (prest != <span class="hljs-literal">null</span> &amp;&amp; !prest.isClosed()) &#123;
+        <span class="hljs-keyword">try</span> &#123;
+            prest.close();
+        &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;
+            e.printStackTrace();
+        &#125;
+    &#125;
+    <span class="hljs-keyword">if</span> (connection != <span class="hljs-literal">null</span> &amp;&amp; !connection.isClosed()) &#123;
+        <span class="hljs-keyword">try</span> &#123;
+            connection.close();
+        &#125; <span class="hljs-keyword">catch</span> (SQLException throwables) &#123;
+            throwables.printStackTrace();
+        &#125;
+    &#125;
+&#125;</code></pre></div>
+
+<p><strong>StringBuilder部分</strong></p>
+<p>阅读源码和网络文章</p>
+<p>源码：</p>
+<div class="code-wrapper"><pre><code class="hljs java">java.lang.StringBuilder
+
+<span class="hljs-comment">//404行</span>
+<span class="hljs-meta">@Override</span>
+<span class="hljs-keyword">public</span> String <span class="hljs-title function_">toString</span><span class="hljs-params">()</span> &#123;
+    <span class="hljs-comment">// Create a copy, don&#x27;t share the array</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">String</span>(value, <span class="hljs-number">0</span>, count);
+&#125;
+</code></pre></div>
+<p>当StringBuilder.toString()时，会创建一个新的String对象。<br>当你的String很长时，多次toString，对产生很多大对象，容易把新生代使用满，但是对象还未回收进入到老年代(特别是当前项目中，批量插入数据库中时，数据足够大，基本上千升值上万条批次插入clickhouse，且数据都放在String中)。<br>应该尽量避免tostring，在StringBuilder完成后toString一次，用一个对象去接受；不要多次toString（这部分的代码优化来源于jmap -heap pid | jmap -dump:format&#x3D;b,file&#x3D;xxx.hprof pid 统计得出。<br>）</p>
+<div class="code-wrapper"><pre><code class="hljs bash">
+jmap -dump:format=b,file=./06281330.hprof 10058
+<span class="hljs-comment">#将06281330.hprof 文件下载后 使用VirsualVM分析 hprof文件，发现有char[]中有很多StringBuilder中的字符串数据，本应该回收的，但是一直在jvm内存中。</span>
+<span class="hljs-comment">#目前造成这种现象一个是因为多次引用StringBuilder中的内容时，都toString造成，还有另外一方面是因为新生代内存太小。</span>
+</code></pre></div>
+
+<p>使用参考 <a target="_blank" rel="noopener" href="https://www.yiibai.com/java_data_type/java_stringbuilder_stringbuffer.html">https://www.yiibai.com/java_data_type&#x2F;java_stringbuilder_stringbuffer.html</a></p>
+<p>代码部分优化后可以看到FullGC频率降低了。</p>
+<ol start="2">
+<li>分析过程</li>
+</ol>
+<p>通过将线上环境的堆内存dump文件下载下来分析。（因本地环境的数据量小不是很容易复现）</p>
+<div class="code-wrapper"><pre><code class="hljs bash">jmap -dump:format=b,file=xxx.hprof pid</code></pre></div>
+<p>将上述中获取的xxx.hprof文件下载到本地。</p>
+<p>使用VisualVM工具分析对象在堆内存中的占用情况，发现char[]中有大量的批量插入语句，占比达到了惊人的54.8%。<br>这其中的插入语句不应该有这么多存在。<br>这部分的主要原因应该是代码中StringBuilder多次toString和PreparedStatement未关闭造成；<br>还有部分原因是因为新生代内存太小，太大对象产生后直接进入到了老年代。<br>至此也证实代码中造成FullGC的一些问题。</p>
+<ol start="3">
+<li>JVM参数部分：</li>
+</ol>
+<p>观察线上环境的jvm参数配置:</p>
+<p>发现jvm中新生代内存配置不合理。8G的堆内存，只有332M的新生代，不符合3&#x2F;8常规配比</p>
+<p>优化前参数：</p>
+<div class="code-wrapper"><pre><code class="hljs bash">jmap -heap pid
+                                                                                                
+Debugger attached successfully.                                                                  
+Server compiler detected.                                                                        
+JVM version is 25.251-b08                                                                        
+                                                                                                 
+using parallel threads <span class="hljs-keyword">in</span> the new generation.                                                    
+using thread-local object allocation.                                                            
+Concurrent Mark-Sweep GC                                                                         
+                                                                                                 
+Heap Configuration:                                                                              
+   MinHeapFreeRatio         = 40                                                                 
+   MaxHeapFreeRatio         = 70                                                                 
+   MaxHeapSize              = 8455716864 (8064.0MB)                                              
+   NewSize                  = 348913664 (332.75MB)                                               
+   MaxNewSize               = 348913664 (332.75MB)                                               
+   OldSize                  = 8106803200 (7731.25MB)                                                                                                                                               
+   NewRatio                 = 2                                                                  
+   SurvivorRatio            = 8                                                                  
+   MetaspaceSize            = 536870912 (512.0MB)                                                
+   CompressedClassSpaceSize = 536870912 (512.0MB)                                                
+   MaxMetaspaceSize         = 1073741824 (1024.0MB)                                              
+   G1HeapRegionSize         = 0 (0.0MB)                                                          
+
+Heap Usage:                                                                                      
+New Generation (Eden + 1 Survivor Space):                                                        
+   capacity = 314048512 (299.5MB)                                                                
+   used     = 139638808 (133.1699447631836MB)                                                    
+   free     = 174409704 (166.3300552368164MB)                                                    
+   44.46408840173075% used                                                                       
+Eden Space:                                                                                      
+   capacity = 279183360 (266.25MB)                                                               
+   used     = 104773656 (99.9199447631836MB)                                                     
+   free     = 174409704 (166.3300552368164MB)                                                    
+   37.52861775143046% used                       
+From Space:                                                                                      
+   capacity = 34865152 (33.25MB)                                                                 
+   used     = 34865152 (33.25MB)                                                                 
+   free     = 0 (0.0MB)                                                                          
+   100.0% used                                                                                   
+To Space:                                                                                        
+   capacity = 34865152 (33.25MB)                                                                 
+   used     = 0 (0.0MB)                                                                          
+   free     = 34865152 (33.25MB)                                                                 
+   0.0% used                                                                                     
+concurrent mark-sweep generation:                                                                
+   capacity = 8106803200 (7731.25MB)                                                             
+   used     = 5230841296 (4988.518997192383MB)                                                   
+   free     = 2875961904 (2742.731002807617MB)                                                   
+   64.52409373894756% used                                                                       
+
+32186 interned Strings occupying 3597144 bytes.
+</code></pre></div>
+<p>优化后JVM参数：</p>
+<div class="code-wrapper"><pre><code class="hljs bash">
+Heap Configuration:
+   MinHeapFreeRatio         = 40
+   MaxHeapFreeRatio         = 70
+   MaxHeapSize              = 8455716864 (8064.0MB)
+   NewSize                  = 2147483648 (2048.0MB)
+   MaxNewSize               = 2147483648 (2048.0MB)
+   OldSize                  = 6308233216 (6016.0MB)
+   NewRatio                 = 2
+   SurvivorRatio            = 8
+   MetaspaceSize            = 536870912 (512.0MB)
+   CompressedClassSpaceSize = 536870912 (512.0MB)
+   MaxMetaspaceSize         = 1073741824 (1024.0MB)
+   G1HeapRegionSize         = 0 (0.0MB)
+
+Heap Usage:
+New Generation (Eden + 1 Survivor Space):
+   capacity = 1932787712 (1843.25MB)
+   used     = 1211894112 (1155.7522888183594MB)
+   free     = 720893600 (687.4977111816406MB)
+   62.70187379999237% used
+Eden Space:
+   capacity = 1718091776 (1638.5MB)
+   used     = 1165076592 (1111.1036224365234MB)
+   free     = 553015184 (527.3963775634766MB)
+   67.81224427442926% used
+From Space:
+   capacity = 214695936 (204.75MB)
+   used     = 46817520 (44.64866638183594MB)
+   free     = 167878416 (160.10133361816406MB)
+   21.80643046731914% used
+To Space:
+   capacity = 214695936 (204.75MB)
+   used     = 0 (0.0MB)
+   free     = 214695936 (204.75MB)
+   0.0% used
+concurrent mark-sweep generation:
+   capacity = 6308233216 (6016.0MB)
+   used     = 1113470792 (1061.8884963989258MB)
+   free     = 5194762424 (4954.111503601074MB)
+   17.651072081099166% used
+</code></pre></div>
+<p>优化的Flink-TaskManager启动参数<br>flink-conf.yml</p>
+<div class="code-wrapper"><pre><code class="hljs yml"><span class="hljs-comment">#  -Xmn2G 设置新生代为2G ，当启动Taskmanager后，没有启动任务时，发现Taskmanager的新生代已经使用了983M，占比53%，所以原来的300多M是很不合理的。也是造成FullGC的最主要原因.</span>
+<span class="hljs-attr">env.java.opts.taskmanager:</span> <span class="hljs-string">-Djava.util.Arrays.useLegacyMergeSort=true</span> <span class="hljs-string">-XX:NativeMemoryTracking=detail</span> <span class="hljs-string">-Xmn2G</span>  <span class="hljs-string">-XX:+UseParNewGC</span> <span class="hljs-string">-XX:+UseConcMarkSweepGC</span> <span class="hljs-string">-XX:CMSInitiatingOccupancyFraction=70</span>  <span class="hljs-string">-XX:+UseCompressedClassPointers</span> <span class="hljs-string">-XX:CompressedClassSpaceSize=512M</span> <span class="hljs-string">-XX:MetaspaceSize=512m</span> <span class="hljs-string">-XX:MaxMetaspaceSize=1024m</span>
+</code></pre></div>
+<h1 id="JVM-tools"><a href="#JVM-tools" class="headerlink" title="JVM tools"></a>JVM tools</h1><p>查看实时的内存使用</p>
+<div class="code-wrapper"><pre><code class="hljs bash">jstat -gcutil pid 1000
+更多用法 [https://www.cnblogs.com/czbcxy/p/10845193.html](https://www.cnblogs.com/czbcxy/p/10845193.html)</code></pre></div>
+<p>查看JVM内存配置及使用情况</p>
+<div class="code-wrapper"><pre><code class="hljs bash">jmap -heap pid
+<span class="hljs-comment">#导出dump（hprof）文件</span>
+jmap -dump:format=b,file=xxx.hprof pid</code></pre></div>
+
+<h1 id="JVM调优常用参数"><a href="#JVM调优常用参数" class="headerlink" title="JVM调优常用参数"></a>JVM调优常用参数</h1><p><strong>参数说明</strong> <strong><a target="_blank" rel="noopener" href="https://www.huaweicloud.com/articles/b86de23d6c3d5a161b25b1013a388d8d.html">参考华为jvm调优文档</a></strong></p>
+<div class="code-wrapper"><pre><code class="hljs haml">参数名称	含义	默认值	描述
+-<span class="language-ruby">Xms	初始堆大小	物理内存的<span class="hljs-number">1</span>/<span class="hljs-number">64</span>(&lt;1gb)&lt;td&gt;	默认(MinHeapFreeRatio参数可以调整)空余堆内存小于<span class="hljs-number">40</span>%时，<span class="hljs-variable constant_">JVM</span>就会增大堆直到-Xmx的最大限制.</span>
+-<span class="language-ruby">Xmx	最大堆大小	物理内存的<span class="hljs-number">1</span>/<span class="hljs-number">4</span>(&lt;1gb) &lt;td&gt;	默认(MaxHeapFreeRatio参数可以调整)空余堆内存大于<span class="hljs-number">70</span>%时，<span class="hljs-variable constant_">JVM</span>会减少堆直到 -Xms的最小限制</span>
+-<span class="language-ruby">Xmn	年轻代大小(<span class="hljs-number">1</span>.4or lator)	 	注意：此处的大小是（eden+ <span class="hljs-number">2</span> survivor space).与jmap -heap中显示的New gen是不同的。</span>
+整个堆大小=年轻代大小 + 年老代大小 + 持久代大小.
+增大年轻代后,将会减小年老代大小.此值对系统性能影响较大,Sun官方推荐配置为整个堆的3/8
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:NewSize</span>	设置年轻代大小(<span class="hljs-keyword">for</span> <span class="hljs-number">1.3</span>/<span class="hljs-number">1.4</span>)	 	 </span>
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:MaxNewSize</span>	年轻代最大值(<span class="hljs-keyword">for</span> <span class="hljs-number">1.3</span>/<span class="hljs-number">1.4</span>)	 	 </span>
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:PermSize</span>	设置持久代(perm gen)初始值	物理内存的<span class="hljs-number">1</span>/<span class="hljs-number">64</span>	 </span>
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:MaxPermSize</span>	设置持久代最大值	物理内存的<span class="hljs-number">1</span>/<span class="hljs-number">4</span>	 </span>
+-<span class="language-ruby">Xss	每个线程的堆栈大小	 	<span class="hljs-variable constant_">JDK5</span>.<span class="hljs-number">0</span>以后每个线程堆栈大小为1M,以前每个线程堆栈大小为256K.更具应用的线程所需内存大小进行 调整.在相同物理内存下,减小这个值能生成更多的线程.但是操作系统对一个进程内的线程数还是有限制的,不能无限生成,经验值在<span class="hljs-number">3000</span>~<span class="hljs-number">5000</span>左右</span>
+一般小的应用， 如果栈不是很深， 应该是128k够用的 大的应用建议使用256k。这个选项对性能影响比较大，需要严格的测试。（校长）
+和threadstacksize选项解释很类似,官方文档似乎没有解释,在论坛中有这样一句话:&quot;”
+-<span class="language-ruby">Xss is translated <span class="hljs-keyword">in</span> a <span class="hljs-variable constant_">VM</span> flag named ThreadStackSize”</span>
+一般设置这个值就可以了。
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:ThreadStackSize</span>	Thread Stack Size	 	(<span class="hljs-number">0</span> means use default stack size) [<span class="hljs-symbol">Sparc:</span> <span class="hljs-number">512</span>; Solaris <span class="hljs-symbol">x86:</span> <span class="hljs-number">320</span> (was <span class="hljs-number">256</span> prior <span class="hljs-keyword">in</span> <span class="hljs-number">5.0</span> <span class="hljs-keyword">and</span> earlier); Sparc <span class="hljs-number">64</span> <span class="hljs-symbol">bit:</span> <span class="hljs-number">1024</span>; Linux <span class="hljs-symbol">amd64:</span> <span class="hljs-number">1024</span> (was <span class="hljs-number">0</span> <span class="hljs-keyword">in</span> <span class="hljs-number">5.0</span> <span class="hljs-keyword">and</span> earlier); all others <span class="hljs-number">0</span>.]</span>
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:NewRatio</span>	年轻代(包括Eden和两个Survivor区)与年老代的比值(除去持久代)	 	-<span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:NewRatio=</span><span class="hljs-number">4</span>表示年轻代与年老代所占比值为<span class="hljs-number">1</span><span class="hljs-symbol">:</span><span class="hljs-number">4</span>,年轻代占整个堆栈的<span class="hljs-number">1</span>/<span class="hljs-number">5</span></span>
+Xms=Xmx并且设置了Xmn的情况下，该参数不需要进行设置。
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:SurvivorRatio</span>	Eden区与Survivor区的大小比值	 	设置为<span class="hljs-number">8</span>,则两个Survivor区与一个Eden区的比值为<span class="hljs-number">2</span><span class="hljs-symbol">:</span><span class="hljs-number">8</span>,一个Survivor区占整个年轻代的<span class="hljs-number">1</span>/<span class="hljs-number">10</span></span>
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:LargePageSizeInBytes</span>	内存页的大小不可设置过大， 会影响Perm的大小	 	=128m</span>
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:+UseFastAccessorMethods</span>	原始类型的快速优化	 	 </span>
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:+DisableExplicitGC</span>	关闭System.gc()	 	这个参数需要严格的测试</span>
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:MaxTenuringThreshold</span>	垃圾最大年龄	 	如果设置为<span class="hljs-number">0</span>的话,则年轻代对象不经过Survivor区,直接进入年老代. 对于年老代比较多的应用,可以提高效率.如果将此值设置为一个较大值,则年轻代对象会在Survivor区进行多次复制,这样可以增加对象再年轻代的存活 时间,增加在年轻代即被回收的概率</span>
+该参数只有在串行GC时才有效.
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:+AggressiveOpts</span>	加快编译	 	 </span>
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:+UseBiasedLocking</span>	锁机制的性能改善	 	 </span>
+-<span class="language-ruby">Xnoclassgc	禁用垃圾回收	 	 </span>
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:SoftRefLRUPolicyMSPerMB</span>	每兆堆空闲空间中SoftReference的存活时间	1s	softly reachable objects will remain alive <span class="hljs-keyword">for</span> some amount of time after the last time they were referenced. The default value is one second of lifetime per free megabyte <span class="hljs-keyword">in</span> the heap</span>
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:PretenureSizeThreshold</span>	对象超过多大是直接在旧生代分配	<span class="hljs-number">0</span>	单位字节 新生代采用Parallel Scavenge <span class="hljs-variable constant_">GC</span>时无效</span>
+另一种直接在旧生代分配的情况是大的数组对象,且数组中无外部引用对象.
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:TLABWasteTargetPercent</span>	<span class="hljs-variable constant_">TLAB</span>占eden区的百分比	<span class="hljs-number">1</span>%	 </span>
+-<span class="language-ruby"><span class="hljs-variable constant_">XX</span><span class="hljs-symbol">:+CollectGen0First</span>	FullGC时是否先<span class="hljs-variable constant_">YGC</span>	<span class="hljs-literal">false</span></span></code></pre></div>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flink/" class="category-chain-item">Flink</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/Flink/Java/" class="category-chain-item">Java</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>记一次线上Flink-JVM-FullGC问题总结</div>
+      <div>https://e-miao.github.io/flink/2021-06-27-Flink-JVM-FullGC问题查找和总结/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>e-miao</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年6月27日</div>
+        </div>
+      
+      
+      <div class="license-meta-item">
+        <div>许可协议</div>
+        <div>
+          
+            
+            
+              <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+              <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                <i class="iconfont icon-by"></i>
+              </span>
+              </a>
+            
+          
+        </div>
+      </div>
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/flink/2021-06-27-Flink-Checkpoint-AWS-S3/" title="Flink Checkpoint AWS S3中">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Flink Checkpoint AWS S3中</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/linux/2021-01-01-linux%E4%B8%AD%E4%B8%80%E4%BA%9B%E5%B0%8F%E7%9F%A5%E8%AF%86%E7%82%B9-%E4%B8%8D%E5%AE%9A%E6%97%B6%E6%9B%B4%E6%96%B0/" title="Linux中的一些不注意的小知识点,不定时更新">
+                        <span class="hidden-mobile">Linux中的一些不注意的小知识点,不定时更新</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  <article id="comments" lazyload>
+    
+  <div class="disqus" style="width:100%">
+    <div id="disqus_thread"></div>
+    
+      <script>
+        Fluid.utils.loadComments('#disqus_thread', function() {
+          Fluid.utils.createCssLink('https://lib.baomitu.com/disqusjs/1.3.0/disqusjs.css');
+          Fluid.utils.createScript('https://lib.baomitu.com/disqusjs/1.3.0/disqus.js', function() {
+            new DisqusJS({
+              shortname: 'e-miao-github-io',
+              apikey: 'K9ntLkRrMhoEzmCMaDMpMdjdAualtbyBkIAqZM6b3m7daIEchHWxT19DRIzZVSDR'
+            });
+          });
+        });
+      </script>
+    
+    <noscript>Please enable JavaScript to view the comments</noscript>
+  </div>
+
+
+  </article>
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      headingSelector : CONFIG.toc.headingSelector || 'h1,h2,h3,h4,h5,h6',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      collapseDepth   : CONFIG.toc.collapseDepth || 0,
+      scrollSmooth    : true,
+      headingsOffset  : -boardTop
+    });
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.10/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
