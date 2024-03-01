@@ -1,0 +1,857 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/lxz_head.png">
+  <link rel="icon" href="/img/lxz_head.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="e-miao">
+  <meta name="keywords" content="Hadoop HDFS Yarn">
+  
+    <meta name="description" content="阅读关于Hadoop中读写流程及Yarn提交任务的相关源码">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hadoop源码解读">
+<meta property="og:url" content="https://e-miao.github.io/hadoop/2022-11-15-Hadoop%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB/index.html">
+<meta property="og:site_name" content="e-miao">
+<meta property="og:description" content="阅读关于Hadoop中读写流程及Yarn提交任务的相关源码">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://e-miao.github.io/img/logo/hadoop_logo.png">
+<meta property="article:published_time" content="2022-11-15T18:01:53.000Z">
+<meta property="article:modified_time" content="2022-11-15T18:01:53.000Z">
+<meta property="article:author" content="e-miao">
+<meta property="article:tag" content="Hadoop">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://e-miao.github.io/img/logo/hadoop_logo.png">
+  
+  
+  
+  <title>Hadoop源码解读 - e-miao</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"e-miao.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="e-miao" type="application/atom+xml">
+</head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>e-miao</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/friends/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Hadoop源码解读"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-11-15 18:01" pubdate>
+          2022年11月15日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          21 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Hadoop源码解读</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Hadoop源码解读"><a href="#Hadoop源码解读" class="headerlink" title="Hadoop源码解读"></a>Hadoop源码解读</h1><p>以下解读基础Hadoop版本：3.2.4</p>
+<h1 id="写流程解读："><a href="#写流程解读：" class="headerlink" title="写流程解读："></a>写流程解读：</h1><p>关键类：</p>
+<p><code>DistributedFileSystem</code></p>
+<p>DFSClient</p>
+<p>org.apache.hadoop.hdfs.DFSClient#create()</p>
+<p>org.apache.hadoop.hdfs.DFSOutputStream#newStreamForCreate()</p>
+<p>org.apache.hadoop.hdfs.DFSOutputStream#DFSOutputStream()</p>
+<p>org.apache.hadoop.hdfs.DataStreamer()</p>
+<p>DataStreamer extend Thread</p>
+<p>org.apache.hadoop.hdfs.DataStreamer#run</p>
+<p>org.apache.hadoop.hdfs.DataStreamer.ResponseProcessor#run</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment">   * Same as &#123;<span class="hljs-doctag">@link</span> #create(String, FsPermission, EnumSet, boolean, short, long,</span><br><span class="hljs-comment">   * Progressable, int, ChecksumOpt, InetSocketAddress[])&#125; with the addition of</span><br><span class="hljs-comment">   * ecPolicyName that is used to specify a specific erasure coding policy</span><br><span class="hljs-comment">   * instead of inheriting any policy from this new file&#x27;s parent directory.</span><br><span class="hljs-comment">   * This policy will be persisted in HDFS. A value of null means inheriting</span><br><span class="hljs-comment">   * parent groups&#x27; whatever policy.</span><br><span class="hljs-comment">   */</span><br>  <span class="hljs-keyword">public</span> DFSOutputStream <span class="hljs-title function_">create</span><span class="hljs-params">(String src, FsPermission permission,</span><br><span class="hljs-params">      EnumSet&lt;CreateFlag&gt; flag, <span class="hljs-type">boolean</span> createParent, <span class="hljs-type">short</span> replication,</span><br><span class="hljs-params">      <span class="hljs-type">long</span> blockSize, Progressable progress, <span class="hljs-type">int</span> buffersize,</span><br><span class="hljs-params">      ChecksumOpt checksumOpt, InetSocketAddress[] favoredNodes,</span><br><span class="hljs-params">      String ecPolicyName)</span> <span class="hljs-keyword">throws</span> IOException &#123;<br>    checkOpen();<br>    <span class="hljs-keyword">final</span> <span class="hljs-type">FsPermission</span> <span class="hljs-variable">masked</span> <span class="hljs-operator">=</span> applyUMask(permission);<br>    LOG.debug(<span class="hljs-string">&quot;&#123;&#125;: masked=&#123;&#125;&quot;</span>, src, masked);<br>    <span class="hljs-keyword">final</span> <span class="hljs-type">DFSOutputStream</span> <span class="hljs-variable">result</span> <span class="hljs-operator">=</span> DFSOutputStream.newStreamForCreate(<span class="hljs-built_in">this</span>,<br>        src, masked, flag, createParent, replication, blockSize, progress,<br>        dfsClientConf.createChecksum(checksumOpt),<br>        getFavoredNodesStr(favoredNodes), ecPolicyName);<br>    beginFileLease(result.getFileId(), result);<br>    <span class="hljs-keyword">return</span> result;<br>  &#125;<br></code></pre></td></tr></table></figure>
+
+<p>DFSOutputStream.newStreamForCreate</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">final</span> DFSOutputStream out;<br>    <span class="hljs-keyword">if</span>(stat.getErasureCodingPolicy() != <span class="hljs-literal">null</span>) &#123;<br>      out = <span class="hljs-keyword">new</span> <span class="hljs-title class_">DFSStripedOutputStream</span>(dfsClient, src, stat,<br>          flag, progress, checksum, favoredNodes);<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>      out = <span class="hljs-keyword">new</span> <span class="hljs-title class_">DFSOutputStream</span>(dfsClient, src, stat,<br>          flag, progress, checksum, favoredNodes, <span class="hljs-literal">true</span>);<br>    &#125;<br>    out.start();<br>    <span class="hljs-keyword">return</span> out;<br></code></pre></td></tr></table></figure>
+
+<p>new DFSOutputStream(dfsClient, src, stat,  flag, progress, checksum, favoredNodes, true)</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">protected</span> <span class="hljs-title function_">DFSOutputStream</span><span class="hljs-params">(DFSClient dfsClient, String src,</span><br><span class="hljs-params">      HdfsFileStatus stat, EnumSet&lt;CreateFlag&gt; flag, Progressable progress,</span><br><span class="hljs-params">      DataChecksum checksum, String[] favoredNodes, <span class="hljs-type">boolean</span> createStreamer)</span> &#123;<br>    <span class="hljs-built_in">this</span>(dfsClient, src, flag, progress, stat, checksum);<br>    <span class="hljs-built_in">this</span>.shouldSyncBlock = flag.contains(CreateFlag.SYNC_BLOCK);<br><br>    computePacketChunkSize(dfsClient.getConf().getWritePacketSize(),<br>        bytesPerChecksum);<br><br>    <span class="hljs-keyword">if</span> (createStreamer) &#123;<br>      streamer = <span class="hljs-keyword">new</span> <span class="hljs-title class_">DataStreamer</span>(stat, <span class="hljs-literal">null</span>, dfsClient, src, progress,<br>          checksum, cachingStrategy, byteArrayManager, favoredNodes,<br>          addBlockFlags);<br>    &#125;<br>  &#125;<br></code></pre></td></tr></table></figure>
+
+<p>new DataStreamer()   : <strong>DataStreamer extend</strong> <code>Daemod -&gt;</code> <code>Daemon</code> <strong>extend Thread</strong></p>
+<p>真正和datanode通信的线程，并提交数据的线程。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br></pre></td><td class="code"><pre><code class="hljs java"><br><span class="hljs-comment">/*</span><br><span class="hljs-comment"> * streamer thread is the only thread that opens streams to datanode,</span><br><span class="hljs-comment"> * and closes them. Any error recovery is also done by this thread.</span><br><span class="hljs-comment"> */</span><br><span class="hljs-meta">@Override</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">run</span><span class="hljs-params">()</span> &#123;<br>  <span class="hljs-type">TraceScope</span> <span class="hljs-variable">scope</span> <span class="hljs-operator">=</span> <span class="hljs-literal">null</span>;<br>  <span class="hljs-keyword">while</span> (!streamerClosed &amp;&amp; dfsClient.clientRunning) &#123;<br><span class="hljs-comment">// if the Responder encountered an error, shutdown Responder</span><br><span class="hljs-keyword">if</span> (errorState.hasError()) &#123;<br>      closeResponder();<br>    &#125;<br><br>    DFSPacket one;<br>    <span class="hljs-keyword">try</span> &#123;<br><span class="hljs-comment">// process datanode IO errors if any</span><br><span class="hljs-type">boolean</span> <span class="hljs-variable">doSleep</span> <span class="hljs-operator">=</span> processDatanodeOrExternalError();<br><br>      <span class="hljs-keyword">synchronized</span> (dataQueue) &#123;<br><span class="hljs-comment">// wait for a packet to be sent.</span><br><span class="hljs-keyword">while</span> ((!shouldStop() &amp;&amp; dataQueue.isEmpty()) || doSleep) &#123;<br>          <span class="hljs-type">long</span> <span class="hljs-variable">timeout</span> <span class="hljs-operator">=</span> <span class="hljs-number">1000</span>;<br>          <span class="hljs-keyword">if</span> (stage == BlockConstructionStage.DATA_STREAMING) &#123;<br>            timeout = sendHeartbeat();<br>          &#125;<br>          <span class="hljs-keyword">try</span> &#123;<br>            dataQueue.wait(timeout);<br>          &#125; <span class="hljs-keyword">catch</span> (InterruptedException  e) &#123;<br>LOG.debug(<span class="hljs-string">&quot;Thread interrupted&quot;</span>, e);<br>          &#125;<br>          doSleep = <span class="hljs-literal">false</span>;<br>        &#125;<br>        <span class="hljs-keyword">if</span> (shouldStop()) &#123;<br>          <span class="hljs-keyword">continue</span>;<br>        &#125;<br><span class="hljs-comment">// get packet to be sent.</span><br><span class="hljs-keyword">try</span> &#123;<br>          backOffIfNecessary();<br>        &#125; <span class="hljs-keyword">catch</span> (InterruptedException e) &#123;<br>LOG.debug(<span class="hljs-string">&quot;Thread interrupted&quot;</span>, e);<br>        &#125;<br>        one = dataQueue.getFirst();<span class="hljs-comment">// regular data packet</span><br>SpanId[] parents = one.getTraceParents();<br>        <span class="hljs-keyword">if</span> (parents.length &gt; <span class="hljs-number">0</span>) &#123;<br>          scope = dfsClient.getTracer().<br>              newScope(<span class="hljs-string">&quot;dataStreamer&quot;</span>, parents[<span class="hljs-number">0</span>]);<br>          scope.getSpan().setParents(parents);<br>        &#125;<br>      &#125;<br><br><span class="hljs-comment">// get new block from namenode.</span><br>LOG.debug(<span class="hljs-string">&quot;stage=&#123;&#125;, &#123;&#125;&quot;</span>, stage, <span class="hljs-built_in">this</span>);<br><br>      <span class="hljs-keyword">if</span> (stage == BlockConstructionStage.PIPELINE_SETUP_CREATE) &#123;<br>LOG.debug(<span class="hljs-string">&quot;Allocating new block: &#123;&#125;&quot;</span>, <span class="hljs-built_in">this</span>);<br>        setPipeline(nextBlockOutputStream());<br>        initDataStreaming();<br>      &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (stage == BlockConstructionStage.PIPELINE_SETUP_APPEND) &#123;<br>LOG.debug(<span class="hljs-string">&quot;Append to block &#123;&#125;&quot;</span>, block);<br>        setupPipelineForAppendOrRecovery();<br>        <span class="hljs-keyword">if</span> (streamerClosed) &#123;<br>          <span class="hljs-keyword">continue</span>;<br>        &#125;<br>        initDataStreaming();<br>      &#125;<br><br>      <span class="hljs-type">long</span> <span class="hljs-variable">lastByteOffsetInBlock</span> <span class="hljs-operator">=</span> one.getLastByteOffsetBlock();<br>      <span class="hljs-keyword">if</span> (lastByteOffsetInBlock &gt; stat.getBlockSize()) &#123;<br>        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">IOException</span>(<span class="hljs-string">&quot;BlockSize &quot;</span> + stat.getBlockSize() +<br>            <span class="hljs-string">&quot; &lt; lastByteOffsetInBlock, &quot;</span> + <span class="hljs-built_in">this</span> + <span class="hljs-string">&quot;, &quot;</span> + one);<br>      &#125;<br><br>      <span class="hljs-keyword">if</span> (one.isLastPacketInBlock()) &#123;<br><span class="hljs-comment">// wait for all data packets have been successfully acked</span><br>waitForAllAcks();<br>        <span class="hljs-keyword">if</span>(shouldStop()) &#123;<br>          <span class="hljs-keyword">continue</span>;<br>        &#125;<br>        stage = BlockConstructionStage.PIPELINE_CLOSE;<br>      &#125;<br><br><span class="hljs-comment">// send the packet</span><br><span class="hljs-type">SpanId</span> <span class="hljs-variable">spanId</span> <span class="hljs-operator">=</span> SpanId.INVALID;<br>      <span class="hljs-keyword">synchronized</span> (dataQueue) &#123;<br><span class="hljs-comment">// move packet from dataQueue to ackQueue</span><br><span class="hljs-keyword">if</span> (!one.isHeartbeatPacket()) &#123;<br>          <span class="hljs-keyword">if</span> (scope != <span class="hljs-literal">null</span>) &#123;<br>            spanId = scope.getSpanId();<br>            scope.detach();<br>            one.setTraceScope(scope);<br>          &#125;<br>          scope = <span class="hljs-literal">null</span>;<br>          dataQueue.removeFirst();<br>          ackQueue.addLast(one);<br>          packetSendTime.put(one.getSeqno(), Time.monotonicNow());<br>          dataQueue.notifyAll();<br>        &#125;<br>      &#125;<br><br>LOG.debug(<span class="hljs-string">&quot;&#123;&#125; sending &#123;&#125;&quot;</span>, <span class="hljs-built_in">this</span>, one);<br><br><span class="hljs-comment">// write out data to remote datanode</span><br><span class="hljs-keyword">try</span> (<span class="hljs-type">TraceScope</span> <span class="hljs-variable">ignored</span> <span class="hljs-operator">=</span> dfsClient.getTracer().<br>          newScope(<span class="hljs-string">&quot;DataStreamer#writeTo&quot;</span>, spanId)) &#123;<br>        sendPacket(one);<br>      &#125; <span class="hljs-keyword">catch</span> (IOException e) &#123;<br><span class="hljs-comment">// HDFS-3398 treat primary DN is down since client is unable to</span><br>        <span class="hljs-comment">// write to primary DN. If a failed or restarting node has already</span><br>        <span class="hljs-comment">// been recorded by the responder, the following call will have no</span><br>        <span class="hljs-comment">// effect. Pipeline recovery can handle only one node error at a</span><br>        <span class="hljs-comment">// time. If the primary node fails again during the recovery, it</span><br>        <span class="hljs-comment">// will be taken out then.</span><br>errorState.markFirstNodeIfNotMarked();<br>        <span class="hljs-keyword">throw</span> e;<br>      &#125;<br><br><span class="hljs-comment">// update bytesSent</span><br><span class="hljs-type">long</span> <span class="hljs-variable">tmpBytesSent</span> <span class="hljs-operator">=</span> one.getLastByteOffsetBlock();<br>      <span class="hljs-keyword">if</span> (bytesSent &lt; tmpBytesSent) &#123;<br>        bytesSent = tmpBytesSent;<br>      &#125;<br><br>      <span class="hljs-keyword">if</span> (shouldStop()) &#123;<br>        <span class="hljs-keyword">continue</span>;<br>      &#125;<br><br><span class="hljs-comment">// Is this block full?</span><br><span class="hljs-keyword">if</span> (one.isLastPacketInBlock()) &#123;<br><span class="hljs-comment">// wait for the close packet has been acked</span><br><span class="hljs-keyword">try</span> &#123;<br>          waitForAllAcks();<br>        &#125; <span class="hljs-keyword">catch</span> (IOException ioe) &#123;<br><span class="hljs-comment">// No need to do a close recovery if the last packet was acked.</span><br>          <span class="hljs-comment">// i.e. ackQueue is empty.  waitForAllAcks() can get an exception</span><br>          <span class="hljs-comment">// (e.g. connection reset) while sending a heartbeat packet,</span><br>          <span class="hljs-comment">// if the DN sends the final ack and closes the connection.</span><br><span class="hljs-keyword">synchronized</span> (dataQueue) &#123;<br>            <span class="hljs-keyword">if</span> (!ackQueue.isEmpty()) &#123;<br>              <span class="hljs-keyword">throw</span> ioe;<br>            &#125;<br>          &#125;<br>        &#125;<br>        <span class="hljs-keyword">if</span> (shouldStop()) &#123;<br>          <span class="hljs-keyword">continue</span>;<br>        &#125;<br><br>        endBlock();<br>      &#125;<br>      <span class="hljs-keyword">if</span> (progress != <span class="hljs-literal">null</span>) &#123; progress.progress(); &#125;<br><br><span class="hljs-comment">// This is used by unit test to trigger race conditions.</span><br><span class="hljs-keyword">if</span> (artificialSlowdown != <span class="hljs-number">0</span> &amp;&amp; dfsClient.clientRunning) &#123;<br>        Thread.sleep(artificialSlowdown);<br>      &#125;<br>    &#125; <span class="hljs-keyword">catch</span> (Throwable e) &#123;<br><span class="hljs-comment">// Log warning if there was a real error.</span><br><span class="hljs-keyword">if</span> (!errorState.isRestartingNode()) &#123;<br><span class="hljs-comment">// Since their messages are descriptive enough, do not always</span><br>        <span class="hljs-comment">// log a verbose stack-trace WARN for quota exceptions.</span><br><span class="hljs-keyword">if</span> (e <span class="hljs-keyword">instanceof</span> QuotaExceededException) &#123;<br>LOG.debug(<span class="hljs-string">&quot;DataStreamer Quota Exception&quot;</span>, e);<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>LOG.warn(<span class="hljs-string">&quot;DataStreamer Exception&quot;</span>, e);<br>        &#125;<br>      &#125;<br>      lastException.set(e);<br>      <span class="hljs-keyword">assert</span> !(e <span class="hljs-keyword">instanceof</span> NullPointerException);<br>      errorState.setInternalError();<br>      <span class="hljs-keyword">if</span> (!errorState.isNodeMarked()) &#123;<br><span class="hljs-comment">// Not a datanode issue</span><br>streamerClosed = <span class="hljs-literal">true</span>;<br>      &#125;<br>    &#125; <span class="hljs-keyword">finally</span> &#123;<br>      <span class="hljs-keyword">if</span> (scope != <span class="hljs-literal">null</span>) &#123;<br>        scope.close();<br>        scope = <span class="hljs-literal">null</span>;<br>      &#125;<br>    &#125;<br>  &#125;<br>  closeInternal();<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p>org.apache.hadoop.hdfs.DataStreamer#sendPacket</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">sendPacket</span><span class="hljs-params">(DFSPacket packet)</span> <span class="hljs-keyword">throws</span> IOException &#123;<br>    <span class="hljs-comment">// write out data to remote datanode</span><br>    <span class="hljs-keyword">try</span> &#123;<br>      packet.writeTo(blockStream);z<br>      blockStream.flush();<br>    &#125; <span class="hljs-keyword">catch</span> (IOException e) &#123;<br>      <span class="hljs-comment">// HDFS-3398 treat primary DN is down since client is unable to</span><br>      <span class="hljs-comment">// write to primary DN. If a failed or restarting node has already</span><br>      <span class="hljs-comment">// been recorded by the responder, the following call will have no</span><br>      <span class="hljs-comment">// effect. Pipeline recovery can handle only one node error at a</span><br>      <span class="hljs-comment">// time. If the primary node fails again during the recovery, it</span><br>      <span class="hljs-comment">// will be taken out then.</span><br>      errorState.markFirstNodeIfNotMarked();<br>      <span class="hljs-keyword">throw</span> e;<br>    &#125;<br>    lastPacket = Time.monotonicNow();<br>  &#125;<br></code></pre></td></tr></table></figure>
+
+<p>大体写流程步骤：</p>
+<ol>
+<li>创建DFSClicent会创建一个<code>DFSOutputStream</code></li>
+<li>创建<code>DFSOutputStream</code>时，<ol>
+<li>创建<code>HdfsFileStatus</code> 文件状态信息</li>
+<li>初始化packetSize(max&#x3D;16M)</li>
+<li>创建一个<code>DataStreamer</code>流进程，用于对数据的排队，上传（），ack等操作。</li>
+</ol>
+</li>
+<li><code>DataStreamer</code> 进程写数据步骤：<ol>
+<li><p><code>setPipeline(nextBlockOutputStream());</code>向NameNode中申请块信息（可用的datanode节点)，即：获取第一个DataNode信息即所存储的块。</p>
+</li>
+<li><p>根据总的文件大小，和设定的packet大小，得到很多歌packet。拆分数据为到不同的packet中</p>
+</li>
+<li><p>将packet放入到queue。</p>
+</li>
+<li><p>执行发送Packet（从queue取出队列中DFSPacket发送到datanode1的block块中。）</p>
+</li>
+<li><p>当块中数据达到阈值（128M)时，关闭块，后续packet重新申请block，重复上述传输步骤。</p>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">sendPacket</span><span class="hljs-params">(DFSPacket packet)</span> <span class="hljs-keyword">throws</span> IOException &#123;<br>    <span class="hljs-comment">// write out data to remote datanode</span><br>    <span class="hljs-keyword">try</span> &#123;<br>      packet.writeTo(blockStream);<br>      blockStream.flush();<br>    &#125; <span class="hljs-keyword">catch</span> (IOException e) &#123;<br>      <span class="hljs-comment">// HDFS-3398 treat primary DN is down since client is unable to</span><br>      <span class="hljs-comment">// write to primary DN. If a failed or restarting node has already</span><br>      <span class="hljs-comment">// been recorded by the responder, the following call will have no</span><br>      <span class="hljs-comment">// effect. Pipeline recovery can handle only one node error at a</span><br>      <span class="hljs-comment">// time. If the primary node fails again during the recovery, it</span><br>      <span class="hljs-comment">// will be taken out then.</span><br>      errorState.markFirstNodeIfNotMarked();<br>      <span class="hljs-keyword">throw</span> e;<br>    &#125;<br>    lastPacket = Time.monotonicNow();<br>  &#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>副本同步+ack。</p>
+</li>
+</ol>
+<p> <code>FSOutputSummer</code></p>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">private</span> <span class="hljs-type">int</span> <span class="hljs-title function_">write1</span><span class="hljs-params">(<span class="hljs-type">byte</span> b[], <span class="hljs-type">int</span> off, <span class="hljs-type">int</span> len)</span> <span class="hljs-keyword">throws</span> IOException &#123;<br>    <span class="hljs-keyword">if</span>(count==<span class="hljs-number">0</span> &amp;&amp; len&gt;=buf.length) &#123;<br>      <span class="hljs-comment">// local buffer is empty and user buffer size &gt;= local buffer size, so</span><br>      <span class="hljs-comment">// simply checksum the user buffer and send it directly to the underlying</span><br>      <span class="hljs-comment">// stream</span><br>      <span class="hljs-keyword">final</span> <span class="hljs-type">int</span> <span class="hljs-variable">length</span> <span class="hljs-operator">=</span> buf.length;<br>      writeChecksumChunks(b, off, length);<br>      <span class="hljs-keyword">return</span> length;<br>    &#125;<br><br></code></pre></td></tr></table></figure>
+<p> <code>DFSOutputStream</code>.writeChunk()时，将数据封装成packet，放入dataQueue中。</p>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Override</span><br>  <span class="hljs-keyword">protected</span> <span class="hljs-keyword">synchronized</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">writeChunk</span><span class="hljs-params">(<span class="hljs-type">byte</span>[] b, <span class="hljs-type">int</span> offset, <span class="hljs-type">int</span> len,</span><br><span class="hljs-params">      <span class="hljs-type">byte</span>[] checksum, <span class="hljs-type">int</span> ckoff, <span class="hljs-type">int</span> cklen)</span> <span class="hljs-keyword">throws</span> IOException &#123;<br>    writeChunkPrepare(len, ckoff, cklen);<br><br>    currentPacket.writeChecksum(checksum, ckoff, cklen);<br>    currentPacket.writeData(b, offset, len);<br>    currentPacket.incNumChunks();<br>    getStreamer().incBytesCurBlock(len);<br><br>    <span class="hljs-comment">// If packet is full, enqueue it for transmission</span><br>    <span class="hljs-keyword">if</span> (currentPacket.getNumChunks() == currentPacket.getMaxChunks() ||<br>        getStreamer().getBytesCurBlock() == blockSize) &#123;<br>      enqueueCurrentPacketFull();<br>    &#125;<br>  &#125;<br></code></pre></td></tr></table></figure></li>
+</ol>
+<p><code>new DFSOutputStream().start()</code></p>
+<p>创建流时（<code>DFSOutputStream</code>），同时会启动一个<code>DataStreamer</code>线程 用于发送 packet。</p>
+<p><code>DataStreamer</code>线程 发送的流程：</p>
+<ol>
+<li><p><code>setPipeline(nextBlockOutputStream());</code>（与namenode通信,在namenode中注册块信息和文件信息，返回datanode信息和储存信息）</p>
+<ol>
+<li>从datanode列表中中获取第一个可用的datanode建立<code>Socket</code></li>
+<li>发送请求</li>
+<li>ack确认</li>
+<li>ack确认成功后，返回可用的块和节点信息</li>
+<li>设置可用的节点和块信息。</li>
+</ol>
+</li>
+<li><p><code>initDataStreaming</code> 初始化流，并启动一个ack进程。</p>
+<ol>
+<li><p>初始化*<code>data streaming</code>* ,其中单独有个线程有response来进行ack确认，保证数据传输的完整性。</p>
+<p> <code>new ResponseProcessor(nodes)</code>.start()</p>
+<p> <code>ResponseProcessor</code> extend Thread</p>
+</li>
+</ol>
+</li>
+<li><p>发送packet到datanode的block中，通过流的形式，使用ackqueue进行确认，保证数据完整性。</p>
+<p> <code>dataQueue.removeFirst();</code></p>
+<p> <code>ackQueue.addLast(one);</code></p>
+<p> <code>sendPacket(one);</code></p>
+<p> 将packet移除dataQueue，加入待确认的ackQueue，并发送packet。</p>
+<ol>
+<li>将packet通过流的形式发送到datanode1的block块中，当数据大小达到块大小，则关闭块；</li>
+<li>后续的packet会重新申请block；再往新的block中写入数据。</li>
+</ol>
+</li>
+<li><p>如果发送失败，会进行重试。</p>
+<ol>
+<li>失败重试成功，会去更新NameNode中的块信息</li>
+<li>若是追加块信息，也会重新去更新NameNode中的块信息</li>
+</ol>
+</li>
+<li><p>副本同步；如有hdfs设置副本超过1了，dn1,会向dn2，dn2再向dn3,进行数据同步操作(block级别同步)；此步骤也需要ack确认。</p>
+<p> <code>setupPipelineForAppendOrRecovery</code></p>
+<p> <code>handleDatanodeReplacement()</code></p>
+</li>
+<li><p>等待所有数据发送完成后，且副本同步成功，则视为整个写入流程完成，接着关闭相关资源</p>
+<p> 如果是最后一个packet发送时，尝试等待allAcks确认，如果都成功，则清理资源。</p>
+<p> <code>waitForAllAcks();</code></p>
+<p> 将所有packet发送完成后，等待allAcks确认完成；关闭 发送线程 和 ack确认线程 ，清理queue。</p>
+</li>
+</ol>
+<h1 id="读流程解读："><a href="#读流程解读：" class="headerlink" title="读流程解读："></a>读流程解读：</h1><ol>
+<li><p>获取文件系统</p>
+</li>
+<li><p>打开文件系统时，通过文件路径，定位出文件所有的块信息。</p>
+<p> <code>LocatedBlocks locatedBlocks = getLocatedBlocks(src, 0);</code></p>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">LocatedBlocks</span> &#123;<br>  <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> <span class="hljs-type">long</span> fileLength;<br>  <span class="hljs-comment">// array of blocks with prioritized locations</span><br>  <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> List&lt;LocatedBlock&gt; blocks;<br>  <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> <span class="hljs-type">boolean</span> underConstruction;<br>  <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> LocatedBlock lastLocatedBlock;<br>  <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> <span class="hljs-type">boolean</span> isLastBlockComplete;<br>  <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> FileEncryptionInfo fileEncryptionInfo;<br>  <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> ErasureCodingPolicy ecPolicy;<br>&#125;<br><br>LocatedBlock <br></code></pre></td></tr></table></figure>
+<p> <img src="/img/hadoop/hdfs_block.png" srcset="/img/loading.gif" lazyload alt="hdfs_block"></p>
+</li>
+<li><p>根据块信息<code>LocatedBlock中的``DatanodeInfo[]返回可用的dataNode节点信息</code></p>
+</li>
+<li><p>通过返回的DataNode节点，建立连接访问块中数据</p>
+<p> <code>DNAddrPair retval = chooseDataNode(targetBlock, null);</code></p>
+</li>
+<li><p>根据块的新的，访问实际数据<code>actualGetFromOneDataNode</code> <code>getBlockReader</code></p>
+</li>
+</ol>
+<h1 id="hadoop-MR流程"><a href="#hadoop-MR流程" class="headerlink" title="hadoop-MR流程"></a>hadoop-MR流程</h1><h2 id="任务提交阶段："><a href="#任务提交阶段：" class="headerlink" title="任务提交阶段："></a>任务提交阶段：</h2><ol>
+<li><p>生成JobID</p>
+</li>
+<li><p>拷贝配置和配置文件到工作目录中。</p>
+</li>
+<li><p>计算分片个数（FileInputFormat中；通过块的个数，默认情况下，等于文件块的个数），分片个数也等于map-task的个数。</p>
+<ol>
+<li><p>org.apache.hadoop.mapreduce.JobSubmitter#submitJobInternal</p>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">protected</span> <span class="hljs-type">long</span> <span class="hljs-title function_">computeSplitSize</span><span class="hljs-params">(<span class="hljs-type">long</span> blockSize, <span class="hljs-type">long</span> minSize,</span><br><span class="hljs-params">                                <span class="hljs-type">long</span> maxSize)</span> &#123;<br>  <span class="hljs-keyword">return</span> Math.max(minSize, Math.min(maxSize, blockSize));<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ol>
+</li>
+<li><p>客户端端提交Job</p>
+<ol>
+<li>如何提交到yarn，提交到ResourceManger，则会申请一台DataNode节点后启动appMster进程。</li>
+</ol>
+</li>
+</ol>
+<h2 id="MapTask阶段："><a href="#MapTask阶段：" class="headerlink" title="MapTask阶段："></a>MapTask阶段：</h2><p>org.apache.hadoop.mapred.MapTask#runNewMapper</p>
+<p>org.apache.hadoop.mapred.MapTask#getSplitDetails</p>
+<p>org.apache.hadoop.mapred.MapTask#createSortingCollector</p>
+<p><code>job.getClasses(JobContext.*MAP_OUTPUT_COLLECTOR_CLASS_ATTR*, MapOutputBuffer.class);</code></p>
+<p>org.apache.hadoop.mapred.MapTask.MapOutputBuffer#init</p>
+<p>org.apache.hadoop.mapred.MapTask.MapOutputBuffer#flush</p>
+<p>org.apache.hadoop.mapred.MapTask.MapOutputBuffer#sortAndSpill</p>
+<p>org.apache.hadoop.util.IndexedSorter#sort(org.apache.hadoop.util.IndexedSortable, int, int, org.apache.hadoop.util.Progressable)</p>
+<ol>
+<li><p>接收来自InputFormat传递过来的KV值；</p>
+</li>
+<li><p>map方法处理逻辑并写出数据。</p>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">map</span><span class="hljs-params">(KEYIN key, VALUEIN value, </span><br><span class="hljs-params">                     Context context)</span> <span class="hljs-keyword">throws</span> IOException, InterruptedException &#123;<br>    context.write((KEYOUT) key, (VALUEOUT) value);<br>  &#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>MapOutput阶段输出结果到临时文件：Shuffle阶段在MapTask中的部分。</p>
+</li>
+</ol>
+<h2 id="Shuffle-阶段1："><a href="#Shuffle-阶段1：" class="headerlink" title="Shuffle 阶段1："></a>Shuffle 阶段1：</h2><p> org.apache.hadoop.mapred.MapTask.MapOutputBuffer</p>
+<ol>
+<li><p>初始化环形缓冲区。</p>
+</li>
+<li><p>将数据写入环形缓冲区</p>
+</li>
+<li><p>当数据达到缓冲区阈值时，</p>
+</li>
+<li><p>落盘前进行了分区和快排。</p>
+<p> org.apache.hadoop.mapred.MapTask.MapOutputBuffer#compare</p>
+<p> 先排序分区，再通过key排序。</p>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-type">int</span> <span class="hljs-title function_">compare</span><span class="hljs-params">(<span class="hljs-keyword">final</span> <span class="hljs-type">int</span> mi, <span class="hljs-keyword">final</span> <span class="hljs-type">int</span> mj)</span> &#123;<br>      <span class="hljs-keyword">final</span> <span class="hljs-type">int</span> <span class="hljs-variable">kvi</span> <span class="hljs-operator">=</span> offsetFor(mi % maxRec);<br>      <span class="hljs-keyword">final</span> <span class="hljs-type">int</span> <span class="hljs-variable">kvj</span> <span class="hljs-operator">=</span> offsetFor(mj % maxRec);<br>      <span class="hljs-keyword">final</span> <span class="hljs-type">int</span> <span class="hljs-variable">kvip</span> <span class="hljs-operator">=</span> kvmeta.get(kvi + PARTITION);<br>      <span class="hljs-keyword">final</span> <span class="hljs-type">int</span> <span class="hljs-variable">kvjp</span> <span class="hljs-operator">=</span> kvmeta.get(kvj + PARTITION);<br>      <span class="hljs-comment">// sort by partition</span><br>      <span class="hljs-keyword">if</span> (kvip != kvjp) &#123;<br>        <span class="hljs-keyword">return</span> kvip - kvjp;<br>      &#125;<br>      <span class="hljs-comment">// sort by key</span><br>      <span class="hljs-keyword">return</span> comparator.compare(kvbuffer,<br>          kvmeta.get(kvi + KEYSTART),<br>          kvmeta.get(kvi + VALSTART) - kvmeta.get(kvi + KEYSTART),<br>          kvbuffer,<br>          kvmeta.get(kvj + KEYSTART),<br>          kvmeta.get(kvj + VALSTART) - kvmeta.get(kvj + KEYSTART));<br>    &#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>对数据进行溢写到磁盘中。[spillN.out]</p>
+</li>
+</ol>
+<p>至此mapTask阶段完成</p>
+<h2 id="Shuffle阶段2："><a href="#Shuffle阶段2：" class="headerlink" title="Shuffle阶段2："></a>Shuffle阶段2：</h2><p>发生在map之后，</p>
+<p>触发时在reduceTask中，但发生在reduce之前。</p>
+<p>ReduceTask启时，也会启动</p>
+<p>初始化shuffle时做的事情：</p>
+<ol>
+<li>初始化合并管理器<code>MergeManagerImpl</code> 初始化合并管理器后，线程运行，发现有合并的队列就进行合并。 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs java">org.apache.hadoop.mapreduce.task.reduce.MergeThread#run<br>org.apache.hadoop.mapred.Merger#merge(org.apache.hadoop.conf.Configuration, org.apache.hadoop.fs.FileSystem, java.lang.Class&lt;K&gt;, java.lang.Class&lt;V&gt;, java.util.List&lt;org.apache.hadoop.mapred.Merger.Segment&lt;K,V&gt;&gt;, <span class="hljs-type">int</span>, org.apache.hadoop.fs.Path, org.apache.hadoop.io.RawComparator&lt;K&gt;, org.apache.hadoop.util.Progressable, org.apache.hadoop.mapred.Counters.Counter, org.apache.hadoop.mapred.Counters.Counter, org.apache.hadoop.util.Progress)<br></code></pre></td></tr></table></figure>
+<ol>
+<li><p>其中又初始化了三个类型的合并管理器</p>
+<p> 合并器即：合并（归并）线程，其中维护了一个linkedlist的待合并的队列。</p>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-type">boolean</span> <span class="hljs-variable">allowMemToMemMerge</span> <span class="hljs-operator">=</span> <br>      jobConf.getBoolean(MRJobConfig.REDUCE_MEMTOMEM_ENABLED, <span class="hljs-literal">false</span>);<br>    <span class="hljs-keyword">if</span> (allowMemToMemMerge) &#123;<br>      <span class="hljs-built_in">this</span>.memToMemMerger = <br>        <span class="hljs-keyword">new</span> <span class="hljs-title class_">IntermediateMemoryToMemoryMerger</span>(<span class="hljs-built_in">this</span>,<br>                                             memToMemMergeOutputsThreshold);<br>      <span class="hljs-built_in">this</span>.memToMemMerger.start();<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>      <span class="hljs-built_in">this</span>.memToMemMerger = <span class="hljs-literal">null</span>;<br>    &#125;<br>    <br>    <span class="hljs-built_in">this</span>.inMemoryMerger = createInMemoryMerger();<br>    <span class="hljs-built_in">this</span>.inMemoryMerger.start();<br>    <br>    <span class="hljs-built_in">this</span>.onDiskMerger = <span class="hljs-keyword">new</span> <span class="hljs-title class_">OnDiskMerger</span>(<span class="hljs-built_in">this</span>);<br>    <span class="hljs-built_in">this</span>.onDiskMerger.start();<br></code></pre></td></tr></table></figure></li>
+</ol>
+</li>
+</ol>
+<p>步骤：</p>
+<ol>
+<li>接受来自MapOutput阶段输出的值。</li>
+<li>将数据写入到Shuffer的Buffer中</li>
+<li>当数据量达到一定阈值的时候，刷新到磁盘</li>
+<li>Key合并排序[归并排序]刷写到磁盘。</li>
+</ol>
+<p>关键代码 ：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs java">org.apache.hadoop.mapred.ReduceTask#run<br>shuffleConsumerPlugin.run()<br>org.apache.hadoop.mapreduce.task.reduce.Shuffle#run<br>fetchers[i].start();<br>org.apache.hadoop.mapreduce.task.reduce.Fetcher#run<br><span class="hljs-comment">// shuffle 关键 1.拷贝或下载mapout的结果</span><br>org.apache.hadoop.mapreduce.task.reduce.Fetcher#copyFromHost<br>org.apache.hadoop.mapreduce.task.reduce.Fetcher#<span class="hljs-type">copyMapOutput</span><br><br><span class="hljs-variable">mapOutput</span> <span class="hljs-operator">=</span> merger.reserve(mapId, decompressedLength, id);<br>mapOutPut.doShuffle()<br>org.apache.hadoop.mapreduce.task.reduce.InMemoryMapOutput#doShuffle<br><span class="hljs-comment">//根据分区和key执行归并排序。</span><br>org.apache.hadoop.mapreduce.task.reduce.Shuffle#init<br>org.apache.hadoop.mapreduce.task.reduce.MergeManagerImpl#MergeManagerImpl<br><br>org.apache.hadoop.mapreduce.task.reduce.MergeManagerImpl.OnDiskMerger#merge<br>org.apache.hadoop.mapreduce.task.reduce.MergeManagerImpl.InMemoryMerger#merge<br><span class="hljs-comment">//最后将排序好的数据传递到Reduce</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="Reduce阶段"><a href="#Reduce阶段" class="headerlink" title="Reduce阶段"></a>Reduce阶段</h2><p>Shuffle完后，启动Reduce</p>
+<p>根据自定义的Reduce函数，执行统计保存到指定的outPut存储中。</p>
+<p>org.apache.hadoop.mapred.ReduceTask#runNewReducer</p>
+<p>org.apache.hadoop.mapreduce.lib.chain.ChainReducer#run</p>
+<p>org.apache.hadoop.mapreduce.lib.chain.Chain#runReducer</p>
+<p>org.apache.hadoop.mapreduce.Reducer#run</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Hadoop/" class="print-no-link">#Hadoop</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Hadoop源码解读</div>
+      <div>https://e-miao.github.io/hadoop/2022-11-15-Hadoop源码解读/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>e-miao</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年11月15日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/linux/Vim%E6%8F%92%E4%BB%B6%E7%AE%A1%E7%90%86%E4%BD%BF%E7%94%A8/" title="Vim插件管理工具使用">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Vim插件管理工具使用</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/hadoop/2022-11-08-Hadoop3%E7%9A%84%E4%B8%80%E4%BA%9B%E9%87%8D%E5%A4%A7%E5%8D%87%E7%BA%A7/" title="Hadoop3的一些重大升级">
+                        <span class="hidden-mobile">Hadoop3的一些重大升级</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"e-miao/blog-comments","repo-id":"R_kgDOJKc4zQ","category":"Announcements","category-id":"DIC_kwDOJKc4zc4CU61N","theme-light":"light","theme-dark":"dark","mapping":"og:title","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

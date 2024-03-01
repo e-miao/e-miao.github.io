@@ -1,0 +1,715 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/lxz_head.png">
+  <link rel="icon" href="/img/lxz_head.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="e-miao">
+  <meta name="keywords" content="Flink, FlinkSQL">
+  
+    <meta name="description" content="使用FlinkSQL1.10.0 对数据源进行读取操作,将结果集保存到不用数据集中.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flink SQL 调研实践总结">
+<meta property="og:url" content="https://e-miao.github.io/flink/2020-05-12-Flink%20SQL%20%E8%B0%83%E7%A0%94%E5%AE%9E%E8%B7%B5%E6%80%BB%E7%BB%93/index.html">
+<meta property="og:site_name" content="e-miao">
+<meta property="og:description" content="使用FlinkSQL1.10.0 对数据源进行读取操作,将结果集保存到不用数据集中.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://e-miao.github.io/img/logo/flink.png">
+<meta property="article:published_time" content="2020-05-12T00:00:00.000Z">
+<meta property="article:modified_time" content="2020-05-12T00:00:00.000Z">
+<meta property="article:author" content="e-miao">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://e-miao.github.io/img/logo/flink.png">
+  
+  
+  
+  <title>Flink SQL 调研实践总结 - e-miao</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"e-miao.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="e-miao" type="application/atom+xml">
+</head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>e-miao</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/friends/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Flink SQL 调研实践总结"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-05-12 00:00" pubdate>
+          2020年5月12日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          24 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Flink SQL 调研实践总结</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="Flink-SQL-调研实践总结"><a href="#Flink-SQL-调研实践总结" class="headerlink" title="Flink SQL 调研实践总结"></a>Flink SQL 调研实践总结</h2><p>使用Flink 版本为:1.10.0<br>此版本中Flink SQL 对DDL语句支持直接创建Table方式使用.</p>
+<p>注意: 基本使用能够,如果想利用Table方式对Hbase进行类似table查询读取操作失败,所以如果想使用这种方式的话,建议等到后续版本升级可能会支持.</p>
+<h3 id="本次调研实践的各个软件版本说明"><a href="#本次调研实践的各个软件版本说明" class="headerlink" title="本次调研实践的各个软件版本说明"></a>本次调研实践的各个软件版本说明</h3><p>Flink:1.10.0</p>
+<p>Kafka:2.2.0</p>
+<p>ES:7.2</p>
+<p>HBase:2.1.0</p>
+<p>Hadoop:3.0.0</p>
+<p>JDK:1.8.0</p>
+<p>scala:2.11.12 | pom中打包使用的是 2.12</p>
+<h3 id="使用情景"><a href="#使用情景" class="headerlink" title="使用情景:"></a>使用情景:</h3><p>source: kafka</p>
+<p>sink: elesticsearch7, hbase</p>
+<ul>
+<li><p>业务需求:</p>
+<p>利用 FlinkSQL 将 kafka中用户日志数据和hbase中数据数据关联查询.得到结果集.然后再存入hbase和es中.</p>
+</li>
+</ul>
+<h4 id="具体代码实现"><a href="#具体代码实现" class="headerlink" title="具体代码实现"></a>具体代码实现</h4><p>逻辑说明: source接入Kafka,中间经过统计,最后将数据写入到es中.</p>
+<p>直接贴代码吧.</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br></pre></td><td class="code"><pre><code class="hljs scala"><br><span class="hljs-keyword">import</span> org.apache.flink.api.common.restartstrategy.<span class="hljs-type">RestartStrategies</span><br><span class="hljs-keyword">import</span> org.apache.flink.api.scala._<br><span class="hljs-keyword">import</span> org.apache.flink.runtime.state.filesystem.<span class="hljs-type">FsStateBackend</span><br><span class="hljs-keyword">import</span> org.apache.flink.streaming.api.<span class="hljs-type">CheckpointingMode</span><br><span class="hljs-keyword">import</span> org.apache.flink.streaming.api.environment.<span class="hljs-type">CheckpointConfig</span>.<span class="hljs-type">ExternalizedCheckpointCleanup</span><br><span class="hljs-keyword">import</span> org.apache.flink.streaming.api.scala.<span class="hljs-type">StreamExecutionEnvironment</span><br><span class="hljs-keyword">import</span> org.apache.flink.table.api.<span class="hljs-type">EnvironmentSettings</span><br><span class="hljs-keyword">import</span> org.apache.flink.table.api.scala.&#123;<span class="hljs-type">StreamTableEnvironment</span>, _&#125;<br><span class="hljs-keyword">import</span> org.apache.flink.types.<span class="hljs-type">Row</span><br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * 此程序没有做到实时更新当前小时.待优化.(此为FlinkSql的特性所致.虽然没有实时写入到结果集.但是中间计算是实时计算着走的.到窗口结束时会将结果直接写入到结果集中)</span><br><span class="hljs-comment"> */</span><br><span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">FlinkSqlMidKafkaSinkES</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">ConfigBase</span> </span>&#123;<br><br>  <span class="hljs-keyword">var</span> sourSql =<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">      |create table shafa_mid_log_json (</span><br><span class="hljs-string">      | ext String,</span><br><span class="hljs-string">      | os String,</span><br><span class="hljs-string">      | agent_id String,</span><br><span class="hljs-string">      | openid String,</span><br><span class="hljs-string">      | ctx String,</span><br><span class="hljs-string">      | ip String,</span><br><span class="hljs-string">      | network String,</span><br><span class="hljs-string">      | uid String,</span><br><span class="hljs-string">      | admin_id String,</span><br><span class="hljs-string">      | host String,</span><br><span class="hljs-string">      | referral_id String,</span><br><span class="hljs-string">      | theme String,</span><br><span class="hljs-string">      | tag String,</span><br><span class="hljs-string">      | page String,</span><br><span class="hljs-string">      | track String,</span><br><span class="hljs-string">      | channel_id String,</span><br><span class="hljs-string">      | map_json String,</span><br><span class="hljs-string">      | vt String,</span><br><span class="hljs-string">      | ua String,</span><br><span class="hljs-string">      | domain String,</span><br><span class="hljs-string">      | reqtime BIGINT,</span><br><span class="hljs-string">      | ts AS TO_TIMESTAMP(FROM_UNIXTIME(reqtime/1000,&#x27;yyyy-MM-dd HH:mm:ss&#x27;)), -- flink 官方版本暂不支持 传入 bigint的类型.阿里云文档中可以.</span><br><span class="hljs-string">      | proctime as PROCTIME(),   -- 通过计算列产生一个处理时间列</span><br><span class="hljs-string">      | WATERMARK FOR ts as ts - INTERVAL &#x27;5&#x27; SECOND  -- 在et上定义watermark，et成为事件时间列</span><br><span class="hljs-string">      | )</span><br><span class="hljs-string">      | WITH (</span><br><span class="hljs-string">      |&#x27;connector.type&#x27; = &#x27;kafka&#x27;,</span><br><span class="hljs-string">      |&#x27;connector.version&#x27; = &#x27;universal&#x27;,</span><br><span class="hljs-string">      |&#x27;connector.topic&#x27; = &#x27;mid_shafa_json_log&#x27;,</span><br><span class="hljs-string">      |&#x27;connector.startup-mode&#x27; = &#x27;latest-offset&#x27;,</span><br><span class="hljs-string">      |&#x27;connector.properties.group.id&#x27; = &#x27;flink_sql_consume_mid_json&#x27;,</span><br><span class="hljs-string">      |&#x27;connector.properties.zookeeper.connect&#x27; = &#x27;%s&#x27;,</span><br><span class="hljs-string">      |&#x27;connector.properties.bootstrap.servers&#x27; = &#x27;%s&#x27;,</span><br><span class="hljs-string">      |&#x27;format.type&#x27; = &#x27;json&#x27;,</span><br><span class="hljs-string">      |&#x27;update-mode&#x27;=&#x27;append&#x27;</span><br><span class="hljs-string">      | )&quot;&quot;&quot;</span>.stripMargin<br><br>  <span class="hljs-keyword">var</span> sinkSql =<br>    <span class="hljs-string">s&quot;&quot;</span><span class="hljs-string">&quot;CREATE TABLE sink_es_shafa_pv_uv (</span><br><span class="hljs-string">       |ts  STRING,</span><br><span class="hljs-string">       |channel_id String,</span><br><span class="hljs-string">       |pv BIGINT,</span><br><span class="hljs-string">       |uv BIGINT</span><br><span class="hljs-string">       |) WITH (</span><br><span class="hljs-string">       |&#x27;connector.type&#x27; = &#x27;elasticsearch&#x27;,</span><br><span class="hljs-string">       |&#x27;connector.version&#x27; = &#x27;7&#x27;,</span><br><span class="hljs-string">       |&#x27;connector.hosts&#x27; = &#x27;%s&#x27;,</span><br><span class="hljs-string">       |&#x27;connector.index&#x27; = &#x27;shafa_pv_uv_dh&#x27;,</span><br><span class="hljs-string">       |&#x27;connector.document-type&#x27; = &#x27;shafa_pv_uv&#x27;,</span><br><span class="hljs-string">       |&#x27;connector.bulk-flush.max-actions&#x27; = &#x27;1&#x27;,</span><br><span class="hljs-string">       |&#x27;format.type&#x27; = &#x27;json&#x27;,</span><br><span class="hljs-string">       |&#x27;update-mode&#x27; = &#x27;upsert&#x27;</span><br><span class="hljs-string">       |)&quot;</span><span class="hljs-string">&quot;&quot;</span>.stripMargin<br><br>  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">main</span></span>(args: <span class="hljs-type">Array</span>[<span class="hljs-type">String</span>]): <span class="hljs-type">Unit</span> = &#123;<br>    <span class="hljs-keyword">val</span> paramTool = getProperties(args)<br>    <span class="hljs-keyword">val</span> zookeeperQuorum = paramTool.get(<span class="hljs-string">&quot;zookeeper.quorum&quot;</span>)<br>    <span class="hljs-keyword">val</span> esHttpHost = paramTool.get(<span class="hljs-string">&quot;es.http.host&quot;</span>)<br>    <span class="hljs-keyword">val</span> brokerServers = paramTool.get(<span class="hljs-string">&quot;kafka.bootstrap.servers&quot;</span>)<br>    <span class="hljs-keyword">val</span> env: <span class="hljs-type">StreamExecutionEnvironment</span> = <span class="hljs-type">StreamExecutionEnvironment</span>.getExecutionEnvironment<br><br>    <span class="hljs-comment">//启用并设置checkpoint相关属性</span><br>    env.enableCheckpointing(<span class="hljs-number">1000</span>, <span class="hljs-type">CheckpointingMode</span>.<span class="hljs-type">EXACTLY_ONCE</span>)<br>    env.getCheckpointConfig.setMaxConcurrentCheckpoints(<span class="hljs-number">1</span>)<br>    env.getCheckpointConfig.setMinPauseBetweenCheckpoints(<span class="hljs-number">500</span>)<br>    env.getCheckpointConfig.setCheckpointTimeout(<span class="hljs-number">60000</span>)<br>    <span class="hljs-comment">//2049 9870</span><br>    <span class="hljs-comment">//    env.setStateBackend(new FsStateBackend(&quot;hdfs://hd-master-101:9000/flink/checkpoints/shafa_pv_uv/&quot;));</span><br>    env.setStateBackend(<span class="hljs-keyword">new</span> <span class="hljs-type">FsStateBackend</span>(<span class="hljs-string">&quot;hdfs:///flink/checkpoints/shafa_pv_uv/&quot;</span>));<br>    env.getCheckpointConfig.enableExternalizedCheckpoints(<span class="hljs-type">ExternalizedCheckpointCleanup</span>.<span class="hljs-type">RETAIN_ON_CANCELLATION</span>)<br>    <span class="hljs-comment">//重启策略</span><br>    env.setRestartStrategy(<span class="hljs-type">RestartStrategies</span>.noRestart())<br><br><br>    <span class="hljs-keyword">val</span> settings = <span class="hljs-type">EnvironmentSettings</span>.newInstance()<br>      .useBlinkPlanner()<br>      .inStreamingMode()<br>      .build()<br>    env.setParallelism(<span class="hljs-number">1</span>)<br><br>    <span class="hljs-keyword">val</span> tEnv = <span class="hljs-type">StreamTableEnvironment</span>.create(env, settings)<br>    <span class="hljs-comment">//origin_cps_shafa_logs</span><br>    tEnv.sqlUpdate(sourSql.format(zookeeperQuorum, brokerServers))<br>    <span class="hljs-comment">//    tEnv.sqlUpdate(sourConsumeSql)</span><br>    tEnv.sqlUpdate(sinkSql.format(esHttpHost))<br>    <span class="hljs-comment">//    tEnv.sqlQuery(&quot;&quot;&quot;select channel_id,uid,ts,proctime from shafa_mid_log_json &quot;&quot;&quot;).toAppendStream[Row].print()</span><br>    <span class="hljs-comment">//统计一分钟内的数据</span><br>    tEnv.sqlQuery(<br>      <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">        |</span><br><span class="hljs-string">        |select</span><br><span class="hljs-string">        | DATE_FORMAT(TUMBLE_START(ts, interval &#x27;10&#x27; minute),&#x27;yyyyMMddHHmm&#x27;) as ts,</span><br><span class="hljs-string">        | &#x27;all&#x27; as channel_id,</span><br><span class="hljs-string">        | count(uid) as pv,</span><br><span class="hljs-string">        | count(distinct uid) as pv</span><br><span class="hljs-string">        | from shafa_mid_log_json</span><br><span class="hljs-string">        | group by tumble(ts,interval &#x27;10&#x27; minute )</span><br><span class="hljs-string">        |&quot;&quot;&quot;</span>.stripMargin)<br>      .toAppendStream[<span class="hljs-type">Row</span>].print()<br><br>    <span class="hljs-comment">//    //5分钟</span><br>    <span class="hljs-comment">//    tEnv.sqlUpdate(</span><br>    <span class="hljs-comment">//      &quot;&quot;&quot;</span><br>    <span class="hljs-comment">//        |insert into sink_es_shafa_pv_uv</span><br>    <span class="hljs-comment">//        |select</span><br>    <span class="hljs-comment">//        | DATE_FORMAT(TUMBLE_END(ts, interval &#x27;5&#x27; minute),&#x27;yyyyMMddHHmm&#x27;) as ts,</span><br>    <span class="hljs-comment">//        | &#x27;all&#x27; as channel_id,</span><br>    <span class="hljs-comment">//        | count(uid) as pv,</span><br>    <span class="hljs-comment">//        | count(distinct uid) as pv</span><br>    <span class="hljs-comment">//        | from shafa_mid_log_json</span><br>    <span class="hljs-comment">//        | group by tumble(ts,interval &#x27;5&#x27; minute )</span><br>    <span class="hljs-comment">//        |&quot;&quot;&quot;.stripMargin)</span><br><br>    <span class="hljs-comment">//统计一个小时内pv,uv</span><br>    tEnv.sqlUpdate(<br>      <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">        |insert into sink_es_shafa_pv_uv</span><br><span class="hljs-string">        | select</span><br><span class="hljs-string">        | DATE_FORMAT(TUMBLE_START(ts, interval &#x27;1&#x27; hour),&#x27;yyyyMMddHH&#x27;) as ts,</span><br><span class="hljs-string">        | channel_id,</span><br><span class="hljs-string">        | count(uid) as pv,</span><br><span class="hljs-string">        | count(distinct uid) as pv</span><br><span class="hljs-string">        | from shafa_mid_log_json</span><br><span class="hljs-string">        | group by tumble(ts,interval &#x27;1&#x27; hour ) , channel_id</span><br><span class="hljs-string">        |&quot;&quot;&quot;</span>.stripMargin)<br><br>    <span class="hljs-comment">//统计当前小时总的pv,uv</span><br>    tEnv.sqlUpdate(<br>      <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">        |insert into sink_es_shafa_pv_uv</span><br><span class="hljs-string">        | select</span><br><span class="hljs-string">        | DATE_FORMAT(TUMBLE_START(ts, interval &#x27;1&#x27; hour),&#x27;yyyyMMddHH&#x27;) as ts,</span><br><span class="hljs-string">        | &#x27;hour&#x27; as channel_id,</span><br><span class="hljs-string">        | count(uid) as pv,</span><br><span class="hljs-string">        | count(distinct uid) as pv</span><br><span class="hljs-string">        | from shafa_mid_log_json</span><br><span class="hljs-string">        | group by tumble(ts,interval &#x27;1&#x27; hour )</span><br><span class="hljs-string">        |&quot;&quot;&quot;</span>.stripMargin)<br><br>    <span class="hljs-comment">//统计当天每个渠道总的pv,uv</span><br>    tEnv.sqlUpdate(<br>      <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">        |insert into sink_es_shafa_pv_uv</span><br><span class="hljs-string">        | select</span><br><span class="hljs-string">        | DATE_FORMAT(TUMBLE_START(ts, interval &#x27;1&#x27; day),&#x27;yyyyMMdd&#x27;) as ts,</span><br><span class="hljs-string">        | channel_id,</span><br><span class="hljs-string">        | count(uid) as pv,</span><br><span class="hljs-string">        | count(distinct uid) as pv</span><br><span class="hljs-string">        | from shafa_mid_log_json</span><br><span class="hljs-string">        | group by tumble(ts,interval &#x27;1&#x27; day ),channel_id</span><br><span class="hljs-string">        |&quot;&quot;&quot;</span>.stripMargin)<br><br>    <span class="hljs-comment">//统计当天总的pv,uv</span><br>    tEnv.sqlUpdate(<br>      <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">        |insert into sink_es_shafa_pv_uv</span><br><span class="hljs-string">        | select</span><br><span class="hljs-string">        | DATE_FORMAT(TUMBLE_START(ts, interval &#x27;1&#x27; day),&#x27;yyyyMMdd&#x27;) as ts,</span><br><span class="hljs-string">        | &#x27;day&#x27; as channel_id,</span><br><span class="hljs-string">        | count(uid) as pv,</span><br><span class="hljs-string">        | count(distinct uid) as pv</span><br><span class="hljs-string">        | from shafa_mid_log_json</span><br><span class="hljs-string">        | group by tumble(ts,interval &#x27;1&#x27; day )</span><br><span class="hljs-string">        |&quot;&quot;&quot;</span>.stripMargin)<br><br>    env.execute(<span class="hljs-string">&quot;stat_shafa_pv_uv_es&quot;</span>)<br>  &#125;<br><br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结:"></a>总结:</h3><ol>
+<li><p>kafka接入时利用了计算列</p>
+ <figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs scala">| reqtime <span class="hljs-type">BIGINT</span>,<br>| ts <span class="hljs-type">AS</span> <span class="hljs-type">TO_TIMESTAMP</span>(<span class="hljs-type">FROM_UNIXTIME</span>(reqtime/<span class="hljs-number">1000</span>,&#x27;yyyy-<span class="hljs-type">MM</span>-dd <span class="hljs-type">HH</span>:mm:ss&#x27;)) <br></code></pre></td></tr></table></figure>
+<p>flink sql1.10.0 中TO_TIMESTAMP函数还不支持时间戳(整型数据),支持符合时间格式的字符串形式.但是阿里云文档的支持.</p>
+</li>
+<li><p>写入结果集需等到窗口结束时一次性写入.</p>
+</li>
+<li><p>目前table 对hbase只能做写入操作.对读取操作不友好,测试发现暂时无法正常使用.不建议使用table方式读取Hbase,但是可以做写入.Flink SQL后续版本可能会升级.</p>
+</li>
+</ol>
+<p>具体代码测试读取Hbase:</p>
+<figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><code class="hljs scala"><br><span class="hljs-keyword">import</span> org.apache.flink.streaming.api.scala.&#123;<span class="hljs-type">StreamExecutionEnvironment</span>, _&#125;<br><span class="hljs-keyword">import</span> org.apache.flink.table.api.<span class="hljs-type">EnvironmentSettings</span><br><span class="hljs-keyword">import</span> org.apache.flink.table.api.scala.&#123;<span class="hljs-type">StreamTableEnvironment</span>, _&#125;<br><span class="hljs-keyword">import</span> org.apache.flink.types.<span class="hljs-type">Row</span><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * hbase join flink sql table test</span><br><span class="hljs-comment"> */</span><br><span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">HbaseJoinFlinkTableV2</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">ConfigBase</span> </span>&#123;<br>  <span class="hljs-keyword">var</span> sourceSql =<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">      |create table cps_hive_to_hbase (</span><br><span class="hljs-string">      | id VARCHAR,</span><br><span class="hljs-string">      | cf1 ROW(</span><br><span class="hljs-string">      | user_id VARCHAR,</span><br><span class="hljs-string">      | channel_id VARCHAR,</span><br><span class="hljs-string">      | open_id VARCHAR,</span><br><span class="hljs-string">      | book_id VARCHAR,</span><br><span class="hljs-string">      | book_sex VARCHAR,</span><br><span class="hljs-string">      | book_category_id VARCHAR,</span><br><span class="hljs-string">      | read_chapter_num VARCHAR,</span><br><span class="hljs-string">      | all_read_chapter_num VARCHAR,</span><br><span class="hljs-string">      | utime VARCHAR,</span><br><span class="hljs-string">      | rgdt VARCHAR,</span><br><span class="hljs-string">      | sex VARCHAR,</span><br><span class="hljs-string">      | subscribe_time VARCHAR,</span><br><span class="hljs-string">      | vip_endtime VARCHAR,</span><br><span class="hljs-string">      | update_user_time VARCHAR,</span><br><span class="hljs-string">      | is_pay VARCHAR,</span><br><span class="hljs-string">      | cz_money VARCHAR,</span><br><span class="hljs-string">      | cz_count VARCHAR,</span><br><span class="hljs-string">      | all_xf_free_kandian VARCHAR,</span><br><span class="hljs-string">      | all_xf_money VARCHAR,</span><br><span class="hljs-string">      | all_remain_money VARCHAR,</span><br><span class="hljs-string">      | all_remain_free_money VARCHAR</span><br><span class="hljs-string">      | )</span><br><span class="hljs-string">      |</span><br><span class="hljs-string">      | )</span><br><span class="hljs-string">      | WITH (</span><br><span class="hljs-string">      |&#x27;connector.type&#x27; = &#x27;hbase&#x27;,</span><br><span class="hljs-string">      |&#x27;connector.version&#x27; = &#x27;1.4.3&#x27;,</span><br><span class="hljs-string">      |&#x27;connector.table-name&#x27; = &#x27;cps_hive_to_hbase&#x27;,</span><br><span class="hljs-string">      |&#x27;connector.zookeeper.znode.parent&#x27; = &#x27;/hbase&#x27;,</span><br><span class="hljs-string">      |&#x27;connector.zookeeper.quorum&#x27; = &#x27;%s&#x27;,</span><br><span class="hljs-string">      |&#x27;connector.write.buffer-flush.max-size&#x27; = &#x27;10mb&#x27;,</span><br><span class="hljs-string">      |&#x27;connector.write.buffer-flush.max-rows&#x27; = &#x27;1000&#x27;,</span><br><span class="hljs-string">      |&#x27;connector.write.buffer-flush.interval&#x27; = &#x27;2s&#x27;</span><br><span class="hljs-string">      | )&quot;&quot;&quot;</span>.stripMargin<br><br>  <span class="hljs-comment">//</span><br>  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">main</span></span>(args: <span class="hljs-type">Array</span>[<span class="hljs-type">String</span>]): <span class="hljs-type">Unit</span> = &#123;<br>    <span class="hljs-keyword">val</span> paramTool = getProperties(args)<br>    <span class="hljs-keyword">val</span> zookeeper = paramTool.get(<span class="hljs-string">&quot;zookeeper.quorum&quot;</span>)<br>    <span class="hljs-keyword">val</span> env = <span class="hljs-type">StreamExecutionEnvironment</span>.getExecutionEnvironment<br>    <span class="hljs-keyword">val</span> settings = <span class="hljs-type">EnvironmentSettings</span>.newInstance()<br>      .useBlinkPlanner()<br>      .inStreamingMode()<br>      .build()<br>    <span class="hljs-comment">//    env.setParallelism(1)</span><br>    <span class="hljs-keyword">val</span> tEnv = <span class="hljs-type">StreamTableEnvironment</span>.create(env, settings)<br>    sourceSql = <span class="hljs-type">String</span>.format(sourceSql, zookeeper)<br><br>    println(sourceSql)<br>    tEnv.sqlUpdate(sourceSql)<br><br>    <span class="hljs-keyword">val</span> query = tEnv.sqlQuery(<span class="hljs-string">&quot;select * from  cps_hive_to_hbase limit 10 &quot;</span>).toAppendStream[<span class="hljs-type">Row</span>].print()<br><br>    env.execute(<span class="hljs-string">&quot;test hbase&quot;</span>)<br><br>  &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+<p>会抛出异常:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs log">Exception in thread &quot;main&quot; java.lang.RuntimeException: java.util.concurrent.ExecutionException: akka.pattern.AskTimeoutException: Ask timed out on [Actor[akka://flink/user/dispatcher#-523925282]] after [10000 ms]. Message of type [org.apache.flink.runtime.rpc.messages.LocalFencedMessage]. A typical reason for `AskTimeoutException` is that the recipient actor didn&#x27;t send a reply.<br><br><br></code></pre></td></tr></table></figure>
+<p>查看官方论坛<a target="_blank" rel="noopener" href="https://issues.apache.org/jira/browse/FLINK-11143">issues</a>中有人提及,未找到解决方案.</p>
+<h3 id="附录一-代码"><a href="#附录一-代码" class="headerlink" title="附录一 代码"></a>附录一 代码</h3><figure class="highlight scala"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs scala"><br><span class="hljs-keyword">import</span> org.apache.flink.api.java.utils.<span class="hljs-type">ParameterTool</span><br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ConfigBase</span> </span>&#123;<br><br>  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">getProperties</span></span>(args: <span class="hljs-type">Array</span>[<span class="hljs-type">String</span>]): <span class="hljs-type">ParameterTool</span> = &#123;<br>    <span class="hljs-type">ParameterTool</span>.fromPropertiesFile(<span class="hljs-keyword">this</span>.getClass.getClassLoader.getResourceAsStream(<span class="hljs-string">&quot;application.yml&quot;</span>))<br>  &#125;<br><br>&#125;<br><br></code></pre></td></tr></table></figure>
+<h3 id="附录二-POM-xml"><a href="#附录二-POM-xml" class="headerlink" title="附录二 POM.xml"></a>附录二 POM.xml</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br></pre></td><td class="code"><pre><code class="hljs xml"><span class="hljs-meta">&lt;?xml version=<span class="hljs-string">&quot;1.0&quot;</span> encoding=<span class="hljs-string">&quot;UTF-8&quot;</span>?&gt;</span><br><span class="hljs-tag">&lt;<span class="hljs-name">project</span> <span class="hljs-attr">xmlns</span>=<span class="hljs-string">&quot;http://maven.apache.org/POM/4.0.0&quot;</span></span><br><span class="hljs-tag">         <span class="hljs-attr">xmlns:xsi</span>=<span class="hljs-string">&quot;http://www.w3.org/2001/XMLSchema-instance&quot;</span></span><br><span class="hljs-tag">         <span class="hljs-attr">xsi:schemaLocation</span>=<span class="hljs-string">&quot;http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd&quot;</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">parent</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>dz-rt<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>com.dz.rt<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>1.0.0<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">parent</span>&gt;</span><br>    <span class="hljs-tag">&lt;<span class="hljs-name">modelVersion</span>&gt;</span>4.0.0<span class="hljs-tag">&lt;/<span class="hljs-name">modelVersion</span>&gt;</span><br><br>    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-sql<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br><br>    <span class="hljs-tag">&lt;<span class="hljs-name">properties</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">flink.version</span>&gt;</span>1.10.0<span class="hljs-tag">&lt;/<span class="hljs-name">flink.version</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">scala.library.verison</span>&gt;</span>2.12<span class="hljs-tag">&lt;/<span class="hljs-name">scala.library.verison</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">scala.version</span>&gt;</span>2.12.11<span class="hljs-tag">&lt;/<span class="hljs-name">scala.version</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">properties</span>&gt;</span><br><br>    <span class="hljs-tag">&lt;<span class="hljs-name">dependencies</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.scala-lang<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>scala-library<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;scala.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-core<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-scala_$&#123;scala.library.verison&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-comment">&lt;!--            &lt;scope&gt;provided&lt;/scope&gt;--&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-streaming-scala_$&#123;scala.library.verison&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-comment">&lt;!--            &lt;scope&gt;provided&lt;/scope&gt;--&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-connector-elasticsearch7_$&#123;scala.library.verison&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-table-api-java-bridge_$&#123;scala.library.verison&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-table-api-scala-bridge_$&#123;scala.library.verison&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-table-planner_$&#123;scala.library.verison&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-table-planner-blink_$&#123;scala.library.verison&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-streaming-scala_$&#123;scala.library.verison&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-clients_$&#123;scala.library.verison&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-table-common<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-comment">&lt;!--            &lt;scope&gt;provided&lt;/scope&gt;--&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-table<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">type</span>&gt;</span>pom<span class="hljs-tag">&lt;/<span class="hljs-name">type</span>&gt;</span><br>            <span class="hljs-comment">&lt;!--            &lt;scope&gt;provided&lt;/scope&gt;--&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-connector-kafka_$&#123;scala.library.verison&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>com.alibaba<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>fastjson<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>1.2.68<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-scala_$&#123;scala.library.verison&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-json<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-csv<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-comment">&lt;!-- https://mvnrepository.com/artifact/org.apache.flink/flink-hbase --&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-hbase_$&#123;scala.library.verison&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-comment">&lt;!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common --&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.hadoop<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>hadoop-common<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>3.0.0<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-comment">&lt;!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-client --&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.hadoop<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>hadoop-client<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>3.0.0<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-comment">&lt;!-- https://mvnrepository.com/artifact/org.apache.hbase/hbase-client --&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.hbase<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>hbase-client<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>2.1.0<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br><span class="hljs-comment">&lt;!--            &lt;version&gt;1.4.3&lt;/version&gt;--&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">dependencies</span>&gt;</span><br><br>    <span class="hljs-tag">&lt;<span class="hljs-name">build</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">resources</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">resource</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">directory</span>&gt;</span>$&#123;basedir&#125;/src/main/scala/<span class="hljs-tag">&lt;/<span class="hljs-name">directory</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">targetPath</span>&gt;</span>target/classes/<span class="hljs-tag">&lt;/<span class="hljs-name">targetPath</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">includes</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">include</span>&gt;</span>*.*<span class="hljs-tag">&lt;/<span class="hljs-name">include</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">includes</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">resource</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">resource</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">directory</span>&gt;</span>$&#123;basedir&#125;/src/main/resources/<span class="hljs-tag">&lt;/<span class="hljs-name">directory</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">includes</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">include</span>&gt;</span>*.*<span class="hljs-tag">&lt;/<span class="hljs-name">include</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">includes</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">resource</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">resources</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">plugins</span>&gt;</span><br>            <span class="hljs-comment">&lt;!-- Scala Compiler --&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">plugin</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>net.alchim31.maven<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>scala-maven-plugin<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>3.2.2<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">executions</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">execution</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">goals</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">goal</span>&gt;</span>compile<span class="hljs-tag">&lt;/<span class="hljs-name">goal</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">goal</span>&gt;</span>testCompile<span class="hljs-tag">&lt;/<span class="hljs-name">goal</span>&gt;</span><br>                        <span class="hljs-tag">&lt;/<span class="hljs-name">goals</span>&gt;</span><br>                    <span class="hljs-tag">&lt;/<span class="hljs-name">execution</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">executions</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">configuration</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">args</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">arg</span>&gt;</span>-nobootcp<span class="hljs-tag">&lt;/<span class="hljs-name">arg</span>&gt;</span><br>                    <span class="hljs-tag">&lt;/<span class="hljs-name">args</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">configuration</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">plugin</span>&gt;</span><br><br>            <span class="hljs-comment">&lt;!-- 编译插件 --&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">plugin</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>maven-compiler-plugin<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>3.7.0<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">configuration</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">source</span>&gt;</span>1.8<span class="hljs-tag">&lt;/<span class="hljs-name">source</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">target</span>&gt;</span>1.8<span class="hljs-tag">&lt;/<span class="hljs-name">target</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">configuration</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">plugin</span>&gt;</span><br><br>            <span class="hljs-tag">&lt;<span class="hljs-name">plugin</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>maven-dependency-plugin<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">executions</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">execution</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">id</span>&gt;</span>copy-dependencies<span class="hljs-tag">&lt;/<span class="hljs-name">id</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">phase</span>&gt;</span>prepare-package<span class="hljs-tag">&lt;/<span class="hljs-name">phase</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">goals</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">goal</span>&gt;</span>copy-dependencies<span class="hljs-tag">&lt;/<span class="hljs-name">goal</span>&gt;</span><br>                        <span class="hljs-tag">&lt;/<span class="hljs-name">goals</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">configuration</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">outputDirectory</span>&gt;</span>$&#123;project.build.directory&#125;/lib<span class="hljs-tag">&lt;/<span class="hljs-name">outputDirectory</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">overWriteReleases</span>&gt;</span>false<span class="hljs-tag">&lt;/<span class="hljs-name">overWriteReleases</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">overWriteSnapshots</span>&gt;</span>false<span class="hljs-tag">&lt;/<span class="hljs-name">overWriteSnapshots</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">overWriteIfNewer</span>&gt;</span>true<span class="hljs-tag">&lt;/<span class="hljs-name">overWriteIfNewer</span>&gt;</span><br>                        <span class="hljs-tag">&lt;/<span class="hljs-name">configuration</span>&gt;</span><br>                    <span class="hljs-tag">&lt;/<span class="hljs-name">execution</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">executions</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">plugin</span>&gt;</span><br><br><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">plugins</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">build</span>&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">project</span>&gt;</span><br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flink/" class="category-chain-item">Flink</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/Flink/FlinkSQL/" class="category-chain-item">FlinkSQL</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Flink SQL 调研实践总结</div>
+      <div>https://e-miao.github.io/flink/2020-05-12-Flink SQL 调研实践总结/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>e-miao</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年5月12日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/flink/2020-11-01-FlinkStreamingWriteHdfs/" title="Flink Streaming Write HDFS(parquet)">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Flink Streaming Write HDFS(parquet)</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/flink/2020-05-08-Flink%20%E6%8F%90%E4%BA%A4%E4%BB%BB%E5%8A%A1%E9%97%AE%E9%A2%98%E5%8F%8A%E6%80%BB%E7%BB%93/" title="Flink 提交任务及问题排查">
+                        <span class="hidden-mobile">Flink 提交任务及问题排查</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"e-miao/blog-comments","repo-id":"R_kgDOJKc4zQ","category":"Announcements","category-id":"DIC_kwDOJKc4zc4CU61N","theme-light":"light","theme-dark":"dark","mapping":"og:title","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
