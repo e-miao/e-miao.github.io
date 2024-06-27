@@ -1,0 +1,1305 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/lxz_head.png">
+  <link rel="icon" href="/img/lxz_head.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="e-miao">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="java JUC相关知识">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java_JUC">
+<meta property="og:url" content="https://e-miao.github.io/java/java-juc%E5%A4%8D%E4%B9%A0/index.html">
+<meta property="og:site_name" content="e-miao">
+<meta property="og:description" content="java JUC相关知识">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://e-miao.github.io/img/logo/java_logo.png">
+<meta property="article:published_time" content="2022-10-26T02:49:33.000Z">
+<meta property="article:modified_time" content="2022-10-26T02:49:33.000Z">
+<meta property="article:author" content="e-miao">
+<meta property="article:tag" content="Java">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://e-miao.github.io/img/logo/java_logo.png">
+  
+  
+  
+  <title>Java_JUC - e-miao</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"e-miao.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="e-miao" type="application/atom+xml">
+</head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>e-miao</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/friends/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Java_JUC"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-10-26 02:49" pubdate>
+          2022年10月26日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          56 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Java_JUC</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Java-JUC"><a href="#Java-JUC" class="headerlink" title="Java-JUC"></a>Java-JUC</h1><h1 id="JUC简介"><a href="#JUC简介" class="headerlink" title="JUC简介"></a>JUC简介</h1><p>java.util.concurrent</p>
+<p>java并发编程，提高程序运行效率。</p>
+<p>充分提供cpu多核。提高吞吐量。</p>
+<p>问题：</p>
+<ol>
+<li>线程安全问题</li>
+<li>线程锁问题</li>
+<li>线程性能问题</li>
+</ol>
+<h1 id="2-线程"><a href="#2-线程" class="headerlink" title="2.线程"></a>2.线程</h1><ul>
+<li>用户线程（User Thread）一般情况new Thread都是用户线程</li>
+<li>守护线程 (Daemon Thread)<ul>
+<li>一种特殊的线程，在后台默默的完成系统性的工作，比如垃圾回收线程</li>
+<li>守护线程作为一个服务线程，当服务对象没有了就没必须继续运行，就自动结束了。</li>
+</ul>
+</li>
+</ul>
+<h1 id="3-CompletableFuture"><a href="#3-CompletableFuture" class="headerlink" title="3. CompletableFuture"></a>3. CompletableFuture</h1><p>异步执行任务</p>
+<ol>
+<li>Runnable</li>
+<li>Callable 有返回</li>
+<li>Future→FutureTask <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Creates a &#123;<span class="hljs-doctag">@code</span> FutureTask&#125; that will, upon running, execute the</span><br><span class="hljs-comment">     * given &#123;<span class="hljs-doctag">@code</span> Callable&#125;.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span>  callable the callable task</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@throws</span> NullPointerException if the callable is null</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">FutureTask</span><span class="hljs-params">(Callable&lt;V&gt; callable)</span> &#123;<br>        <span class="hljs-keyword">if</span> (callable == <span class="hljs-literal">null</span>)<br>            <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">NullPointerException</span>();<br>        <span class="hljs-built_in">this</span>.callable = callable;<br>        <span class="hljs-built_in">this</span>.state = NEW;       <span class="hljs-comment">// ensure visibility of callable</span><br>    &#125;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Creates a &#123;<span class="hljs-doctag">@code</span> FutureTask&#125; that will, upon running, execute the</span><br><span class="hljs-comment">     * given &#123;<span class="hljs-doctag">@code</span> Runnable&#125;, and arrange that &#123;<span class="hljs-doctag">@code</span> get&#125; will return the</span><br><span class="hljs-comment">     * given result on successful completion.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> runnable the runnable task</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> result the result to return on successful completion. If</span><br><span class="hljs-comment">     * you don&#x27;t need a particular result, consider using</span><br><span class="hljs-comment">     * constructions of the form:</span><br><span class="hljs-comment">     * &#123;<span class="hljs-doctag">@code</span> Future&lt;?&gt; f = new FutureTask&lt;Void&gt;(runnable, null)&#125;</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@throws</span> NullPointerException if the runnable is null</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">FutureTask</span><span class="hljs-params">(Runnable runnable, V result)</span> &#123;<br>        <span class="hljs-built_in">this</span>.callable = Executors.callable(runnable, result);<br>        <span class="hljs-built_in">this</span>.state = NEW;       <span class="hljs-comment">// ensure visibility of callable</span><br>    &#125;<br></code></pre></td></tr></table></figure>
+ 痛点：<ol>
+<li>Thread</li>
+</ol>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Allocates a new &#123;<span class="hljs-doctag">@code</span> Thread&#125; object. This constructor has the same</span><br><span class="hljs-comment">     * effect as &#123;<span class="hljs-doctag">@linkplain</span> #Thread(ThreadGroup,Runnable,String) Thread&#125;</span><br><span class="hljs-comment">     * &#123;<span class="hljs-doctag">@code</span> (null, target, name)&#125;.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span>  target</span><br><span class="hljs-comment">     *         the object whose &#123;<span class="hljs-doctag">@code</span> run&#125; method is invoked when this thread</span><br><span class="hljs-comment">     *         is started. If &#123;<span class="hljs-doctag">@code</span> null&#125;, this thread&#x27;s run method is invoked.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span>  name</span><br><span class="hljs-comment">     *         the name of the new thread</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">Thread</span><span class="hljs-params">(Runnable target, String name)</span> &#123;<br>        init(<span class="hljs-literal">null</span>, target, name, <span class="hljs-number">0</span>);<br>    &#125;<br></code></pre></td></tr></table></figure>
+<ol>
+<li><p>多线程，又返回，异步任务</p>
+<ol>
+<li>FutureTask构造注入，实现了多线程，异步，又返回</li>
+</ol>
+<p> <img src="/img/Java-JUC-IMGS/Untitled.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">FutureTask</span>&lt;V&gt; <span class="hljs-keyword">implements</span> <span class="hljs-title class_">RunnableFuture</span>&lt;V&gt;<br><span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Creates a &#123;<span class="hljs-doctag">@code</span> FutureTask&#125; that will, upon running, execute the</span><br><span class="hljs-comment">     * given &#123;<span class="hljs-doctag">@code</span> Callable&#125;.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span>  callable the callable task</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@throws</span> NullPointerException if the callable is null</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">FutureTask</span><span class="hljs-params">(Callable&lt;V&gt; callable)</span> &#123;<br>        <span class="hljs-keyword">if</span> (callable == <span class="hljs-literal">null</span>)<br>            <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">NullPointerException</span>();<br>        <span class="hljs-built_in">this</span>.callable = callable;<br>        <span class="hljs-built_in">this</span>.state = NEW;       <span class="hljs-comment">// ensure visibility of callable</span><br>    &#125;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Creates a &#123;<span class="hljs-doctag">@code</span> FutureTask&#125; that will, upon running, execute the</span><br><span class="hljs-comment">     * given &#123;<span class="hljs-doctag">@code</span> Runnable&#125;, and arrange that &#123;<span class="hljs-doctag">@code</span> get&#125; will return the</span><br><span class="hljs-comment">     * given result on successful completion.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> runnable the runnable task</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> result the result to return on successful completion. If</span><br><span class="hljs-comment">     * you don&#x27;t need a particular result, consider using</span><br><span class="hljs-comment">     * constructions of the form:</span><br><span class="hljs-comment">     * &#123;<span class="hljs-doctag">@code</span> Future&lt;?&gt; f = new FutureTask&lt;Void&gt;(runnable, null)&#125;</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@throws</span> NullPointerException if the runnable is null</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">FutureTask</span><span class="hljs-params">(Runnable runnable, V result)</span> &#123;<br>        <span class="hljs-built_in">this</span>.callable = Executors.callable(runnable, result);<br>        <span class="hljs-built_in">this</span>.state = NEW;       <span class="hljs-comment">// ensure visibility of callable</span><br>    &#125;<br></code></pre></td></tr></table></figure></li>
+</ol>
+<p> FutureTask优点：</p>
+<p> 同时满足Runnable和Callable使用特点，配合线程池，提高程序效率。</p>
+<p> 缺点：</p>
+<ol>
+<li><p>get():容易造成阻塞</p>
+</li>
+<li><p>isDone轮询: 耗费CPU资源</p>
+</li>
+<li><p><strong>Future→FutureTask → CompletableFuture</strong></p>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">CompletableFuture</span>&lt;T&gt; <span class="hljs-keyword">implements</span> <span class="hljs-title class_">Future</span>&lt;T&gt;, CompletionStage&lt;T&gt; <br></code></pre></td></tr></table></figure></li>
+</ol>
+<p> 函数式编程：</p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%201.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<ol>
+<li>CompletableFuture为何出现<ol>
+<li>提供了一种观察者模式类似的机制，可以让任务执行完成后通知监听的一方。</li>
+<li>对异步线程，想要获取结果，改进了FutureTask get阻塞获取结果的方式。</li>
+</ol>
+</li>
+</ol>
+<p> 实现代码：</p>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">CompletableFuture</span>&lt;T&gt; <span class="hljs-keyword">implements</span> <span class="hljs-title class_">Future</span>&lt;T&gt;, CompletionStage&lt;T&gt; &#123;<br></code></pre></td></tr></table></figure>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%202.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p> CompletionStage 是什么</p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%203.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<ol>
+<li><p>CompletableFuture核心四个静态方法创建异步任务</p>
+<ol>
+<li><p>无返回值，两组：CompletableFuture.runAsync()</p>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs java"><br><span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Returns a new CompletableFuture that is asynchronously completed</span><br><span class="hljs-comment">     * by a task running in the &#123;<span class="hljs-doctag">@link</span> ForkJoinPool#commonPool()&#125; after</span><br><span class="hljs-comment">     * it runs the given action.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> runnable the action to run before completing the</span><br><span class="hljs-comment">     * returned CompletableFuture</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@return</span> the new CompletableFuture</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> CompletableFuture&lt;Void&gt; <span class="hljs-title function_">runAsync</span><span class="hljs-params">(Runnable runnable)</span> &#123;<br>        <span class="hljs-keyword">return</span> asyncRunStage(asyncPool, runnable);<br>    &#125;<br><span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Returns a new CompletableFuture that is asynchronously completed</span><br><span class="hljs-comment">     * by a task running in the given executor after it runs the given</span><br><span class="hljs-comment">     * action.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> runnable the action to run before completing the</span><br><span class="hljs-comment">     * returned CompletableFuture</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> executor the executor to use for asynchronous execution</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@return</span> the new CompletableFuture</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> CompletableFuture&lt;Void&gt; <span class="hljs-title function_">runAsync</span><span class="hljs-params">(Runnable runnable,</span><br><span class="hljs-params">                                                   Executor executor)</span> &#123;<br>        <span class="hljs-keyword">return</span> asyncRunStage(screenExecutor(executor), runnable);<br>    &#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>有返回值，两组：CompletableFuture.supplyAsync()</p>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs java"><br><span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Returns a new CompletableFuture that is asynchronously completed</span><br><span class="hljs-comment">     * by a task running in the &#123;<span class="hljs-doctag">@link</span> ForkJoinPool#commonPool()&#125; with</span><br><span class="hljs-comment">     * the value obtained by calling the given Supplier.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> supplier a function returning the value to be used</span><br><span class="hljs-comment">     * to complete the returned CompletableFuture</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> &lt;U&gt; the function&#x27;s return type</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@return</span> the new CompletableFuture</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> &lt;U&gt; CompletableFuture&lt;U&gt; <span class="hljs-title function_">supplyAsync</span><span class="hljs-params">(Supplier&lt;U&gt; supplier)</span> &#123;<br>        <span class="hljs-keyword">return</span> asyncSupplyStage(asyncPool, supplier);<br>    &#125;<br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Returns a new CompletableFuture that is asynchronously completed</span><br><span class="hljs-comment">     * by a task running in the given executor with the value obtained</span><br><span class="hljs-comment">     * by calling the given Supplier.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> supplier a function returning the value to be used</span><br><span class="hljs-comment">     * to complete the returned CompletableFuture</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> executor the executor to use for asynchronous execution</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> &lt;U&gt; the function&#x27;s return type</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@return</span> the new CompletableFuture</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> &lt;U&gt; CompletableFuture&lt;U&gt; <span class="hljs-title function_">supplyAsync</span><span class="hljs-params">(Supplier&lt;U&gt; supplier,</span><br><span class="hljs-params">                                                       Executor executor)</span> &#123;<br>        <span class="hljs-keyword">return</span> asyncSupplyStage(screenExecutor(executor), supplier);<br>    &#125;<br></code></pre></td></tr></table></figure>
+<p> 不指定线程池，默认使用ForkJoinPool.commonPool（守护线程池）</p>
+</li>
+</ol>
+<p> CompletableFuture有点：</p>
+<ol>
+<li>异步任务结束是，会自动回调某个对象方法（相对FutureTask减少了阻塞和轮询查询结果）。</li>
+<li>主线程设置好回调后，不再关心异步任务执行，异步任务之间可以顺序执行。 </li>
+<li>异步任务执行出错是，会自动回调某个对象的方法。</li>
+</ol>
+<p>  join和get方法获取返回值区别：</p>
+<ol>
+<li>get() 编译时会做异常检查让代码抛出异常</li>
+<li>join() 编译时不做检测。两者作用一样。</li>
+</ol>
+</li>
+</ol>
+<h1 id="4-Java-”锁“"><a href="#4-Java-”锁“" class="headerlink" title="4. Java ”锁“"></a>4. Java ”锁“</h1><p> 这里先说一些理论信息；后续有更具体的讲解。</p>
+<h1 id="5-LockSupport和线程中断"><a href="#5-LockSupport和线程中断" class="headerlink" title="5. LockSupport和线程中断"></a>5. LockSupport和线程中断</h1><h2 id="线程中断的三种方法：-多线程之间协同时，中断另外的线程）"><a href="#线程中断的三种方法：-多线程之间协同时，中断另外的线程）" class="headerlink" title="线程中断的三种方法：(多线程之间协同时，中断另外的线程）"></a>线程中断的三种方法：(多线程之间协同时，中断另外的线程）</h2><hr>
+<ol>
+<li>使用volatile实现中断</li>
+<li>使用atomicBoolean</li>
+<li>使用Thread.interrupt</li>
+</ol>
+<p> Thread-interrupt 源码详解：3个方法：</p>
+<ol>
+<li><p>interrupt() &#x2F;&#x2F; </p>
+<p> 1.1 线程处于正常状态：将中断标志位 设置为true，线程不受影响（不会立刻停止），需要线程配合才能中断线程。（不活动的线程，不会产生任何影响）</p>
+<p> 1.2 如果线程处于阻塞状态（wait，join ,sleep中断状态将被清除) 调用interrupt()，线程会退出阻塞状态，并抛出interruptedException </p>
+</li>
+<li><p>isInterrupted() &#x2F;&#x2F;判断此线程是否被中断</p>
+</li>
+<li><p>静态方法：  static<code>interrupted()//返回当前线程中断标志位，并将中断标志位清除，重新置为false</code></p>
+</li>
+</ol>
+</li>
+</ol>
+<h2 id="LockSupport-线程等待唤醒机制"><a href="#LockSupport-线程等待唤醒机制" class="headerlink" title="LockSupport(线程等待唤醒机制)"></a>LockSupport(线程等待唤醒机制)</h2><h3 id="是什么？"><a href="#是什么？" class="headerlink" title="是什么？"></a>是什么？</h3><p>用于创建锁和其他同步类的的基本线程阻塞原语 </p>
+<p>LockSupport中的park(),unpark()的作用分别是阻塞线程和解除阻塞线程  </p>
+<p>线程阻塞的工具类。</p>
+<h3 id="线程等待唤醒方法"><a href="#线程等待唤醒方法" class="headerlink" title="线程等待唤醒方法"></a>线程等待唤醒方法</h3><ol>
+<li>Object中wait()让线程等待，Object.notify()唤醒线程。</li>
+<li>JUC包中的lock.Condition的await()让线程等待，使用signal()唤醒线程。</li>
+<li>LockSupport类可以阻塞当前线程及唤醒指定被阻塞的线程。</li>
+</ol>
+<p>线程等待唤醒发展过程：</p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%204.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p>Object-awit-notify结论：</p>
+<ol>
+<li>Object中的awit和notify实现等待唤醒必须放在同步块中，且成对使用</li>
+<li>先wait后notify才OK，否则顺序不对也不行。</li>
+</ol>
+<p>JUC中lock.Condition-awit-signal结论：</p>
+<ol>
+<li>线程必要获得并持有锁（及在lock.lock和unlock中间），且成对使用。</li>
+<li>必须要先等待后唤醒（先awit后signal）。线程才能被唤醒。</li>
+</ol>
+<p>LockSupport结论：</p>
+<ol>
+<li>正常+无锁块需求。</li>
+<li>之前错误的先唤醒后等待，LockSupport照样支持。park，unpark无先后顺序。</li>
+<li>成双成对要牢记。</li>
+<li>LockSupport通行证(permit)只能有且最多一个，不能累计。</li>
+</ol>
+<hr>
+<h2 id="6-Java内存模型-JMM"><a href="#6-Java内存模型-JMM" class="headerlink" title="6. Java内存模型(JMM)"></a>6. Java内存模型(JMM)</h2><p><img src="/img/Java-JUC-IMGS/Untitled%205.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p>JMM作用： 屏蔽掉各种硬件和各操作系统的内存访问差异。让java程序在各平台达到一致的内存访问效果。</p>
+<p>概念介绍：</p>
+<p>JMM本身是一种抽象概念并不真实存在，仅仅是描述的一组约定和规范。通过这组规定定义了程序中（尤其是多线程）各个变量的读写访问方式并决定了一个线程对共享变量的写入 何时以及如何变成对另外 一个线程可见，关键技术点都是围绕多线程的 原子性，可见性，有序性 展开。</p>
+<p>原则： </p>
+<p>JMM关键技术点都是围绕多线程的 原子性，可见性，有序性展开的。</p>
+<p>能干啥？</p>
+<ol>
+<li>通过JMM实现线程和主内存之间的抽象关系。</li>
+<li>屏蔽各个硬件平台和操作系统的内存访问差异，让Java程序在各平台下达到统一的内存访问效果。</li>
+</ol>
+<p>三大特性：</p>
+<ol>
+<li>可见性：变量存放于主内存中是，每个线程有自己的本地内存，数据copy自主内存，操作完后写入主内存。主内存中的变量对所有线程可见。及时可见。</li>
+<li>原子性：在多线程环境下；同一个操作不能被其他线程打断。</li>
+<li>有序性：指令重 排序</li>
+</ol>
+<p><strong>小结</strong></p>
+<ol>
+<li>所有的共享变量都存储在物理主内存中 </li>
+<li>每个线程都有自己独立的工作内存，里面保存该线程使用到的变量副本（主内存中该变量的拷贝）</li>
+<li>线程对共享变量所有的操作都必须在自己的内存中操作完后，再写回主内存，不能直接在主内存中操作。</li>
+<li>不同线程间无法直接访问其他线程的工作内存。线程间变量值的传递需要通过主内存完成。</li>
+</ol>
+<p>多线程先行发现原则之 happens-before</p>
+<p>总原则： 可见和顺序性</p>
+<ol>
+<li>如果一个操作happens-before另一操作，那么第一个的操作结果对第二个操作可见，且第一个操作的执行顺序排在第二个操作之前。</li>
+<li>两个操作之间存在happens-before关系，并不意味着一定要按照happens-before原则制定的顺序执行，如果重排后执行的结果与happens-before关系执行的结果一致。那么重排并不非法。</li>
+<li>先行发生原则-8原则</li>
+</ol>
+<p><img src="/img/Java-JUC-IMGS/Untitled%206.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<h2 id="7-volatile-与-JMM"><a href="#7-volatile-与-JMM" class="headerlink" title="7. volatile 与 JMM"></a>7. volatile 与 JMM</h2><p>volatile作用：让变量变动时，立即刷新回主内存中并发出通知，对其他线程可见和有序，其他线程也从主内存中读取。</p>
+<p>特点：</p>
+<ol>
+<li>可见性</li>
+<li>有序性，排序要求，禁止重排</li>
+</ol>
+<p>volatile凭什么可以保证可见性和有序性？</p>
+<p>反编译后发现变量会用 ACC_VOLATILE修饰,</p>
+<p>即：JVM编译时,对volatile修饰变量会按照JMM规范在相应位置插入内存屏障。</p>
+<p><strong>内存屏蔽。Memory Barrier； 又称</strong> 内存栅栏，是一类同步屏障指令。使得CPU或编译器对 屏障指令前后所发出的操作 执行一个排序约束。</p>
+<p>volatile无法保证原子性。</p>
+<p>内存屏障作用：</p>
+<ol>
+<li>禁止指令重排序。</li>
+<li>读屏障：Load Barrier，读指令之前插入读屏障，让线程临时内存中的数据失效，重新会到主内存中进行获取最新数据。</li>
+<li>写屏障：Store Barrier，写指令之后插入写屏障，强制把写缓冲区的数据刷写回主内存中。</li>
+</ol>
+<p>细分四种：</p>
+<ol>
+<li>loadload</li>
+<li>storestore</li>
+<li>storeload</li>
+<li>loadstore</li>
+</ol>
+<p><img src="/img/Java-JUC-IMGS/Untitled%207.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p><strong>volatile可见性</strong></p>
+<p>工作内存和主内存间的原子操作性-<strong>读写过程</strong></p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%208.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%209.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p><strong>volatile不保证原子，使用场景：</strong></p>
+<ol>
+<li>运算结果并不依赖变量的当前值，或能够确保只有单一线程修改变量值</li>
+<li>变量不需要与其他的状态变量共同参与不变约束。</li>
+</ol>
+<p><strong>禁止指令重排</strong></p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2010.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p>volatile三句话总结：</p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2011.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<h2 id="8-CAS-Compare-And-Swap-原子操作性"><a href="#8-CAS-Compare-And-Swap-原子操作性" class="headerlink" title="8. CAS(Compare And Swap)+ 原子操作性"></a>8. CAS(Compare And Swap)+ 原子操作性</h2><p>atomic类，乐观锁思想。替换synchronized保证原子操作</p>
+<p>cas参数：自旋</p>
+<ol>
+<li>V内存地址</li>
+<li>A旧的预期值</li>
+<li>B新的值</li>
+</ol>
+<p>CAS是JDK提供的非阻塞原子操作，通过硬件保证了比较-更新的原子性。</p>
+<p>CAS是一条CPU的原子指令（cmpxchg指令）不会造成数据不一致问题。Unsafe提供的CAS方法底层实现即为CPU（cmpxchg）指令</p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2012.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p>AtomicInteger利用 CAS+volatile和native方法保证原子操作，避免synchronized的高开销，执行效率大为提升。</p>
+<p>CAS自旋jdk实现</p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2013.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p>compareAndSawpxxx底层汇编代码：</p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2014.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p> cmpxchg指令：</p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2015.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p><strong>CAS与自旋锁</strong></p>
+<p>自旋锁（spinlock）</p>
+<p>cas是自旋锁基础，cas利用cpu指令保证了原子性，达到锁的效果</p>
+<p>自旋：采用循环方式去获取锁（do-while),当线程发现锁被占用是，不断判断循环去获取锁，直到成功;优点：减少线程上下文切换，缺点：消耗CPU。   </p>
+<p>CAS缺点：</p>
+<ol>
+<li>循环时间长，CPU消耗高</li>
+<li>ABA问题</li>
+</ol>
+<p>ABA问题解决方案：</p>
+<ol>
+<li>增加版本号&#x2F;戳记流水(<code>AtomicStampedReference</code>)</li>
+</ol>
+<h2 id="9-原子类"><a href="#9-原子类" class="headerlink" title="9. 原子类"></a>9. 原子类</h2><p>CAS—&gt;unsafe(cpu指令)—&gt;do-while —&gt; ABA —&gt; 版本号&#x2F;时间戳<code>AtomicStampedReference（版本号、时间戳）</code></p>
+<p><code>AtomicMarkableReference(true/false-AtomicStampedReference简化版)</code></p>
+<p>共16个类</p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2016.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p>基本类</p>
+<p>数组类</p>
+<p>原子引用</p>
+<p>原子字段类型：更加细粒度的原子操作 </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> com.company;<br><br><span class="hljs-keyword">import</span> java.util.concurrent.CountDownLatch;<br><span class="hljs-keyword">import</span> java.util.concurrent.atomic.AtomicIntegerFieldUpdater;<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">MyBank</span>&#123;<br>    String carNo=<span class="hljs-string">&quot;AA&quot;</span>;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">volatile</span> <span class="hljs-type">int</span> money;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">transfer</span><span class="hljs-params">(MyBank myBank)</span>&#123;<br>        fieldUpdater.getAndIncrement(myBank);<br>    &#125;<br>    AtomicIntegerFieldUpdater&lt;MyBank&gt; fieldUpdater= AtomicIntegerFieldUpdater.newUpdater(MyBank.class,<span class="hljs-string">&quot;money&quot;</span>);<br><br>&#125;<br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">AtomicIntegerFieldReDemo</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> InterruptedException &#123;<br>        <span class="hljs-type">MyBank</span> <span class="hljs-variable">myBank</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">MyBank</span>();<br>        <span class="hljs-type">CountDownLatch</span> <span class="hljs-variable">cdl</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">CountDownLatch</span>(<span class="hljs-number">10</span>);<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; i++) &#123;<br>            <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(()-&gt;&#123;<br>                <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">j</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; j &lt; <span class="hljs-number">1000</span>; j++) &#123;<br>                    myBank.transfer(myBank);<br>                &#125;<br>                cdl.countDown();<br>            &#125;,String.valueOf(i)).start();<br>        &#125;<br>        cdl.await();<br>        System.out.println(myBank.money);<br>    &#125;<br>&#125;`<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> com.company;<br><br><span class="hljs-keyword">import</span> java.util.concurrent.CountDownLatch;<br><span class="hljs-keyword">import</span> java.util.concurrent.TimeUnit;<br><span class="hljs-keyword">import</span> java.util.concurrent.atomic.AtomicReferenceFieldUpdater;<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">MyCard</span>&#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">volatile</span> Boolean flag=Boolean.FALSE;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">init</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> InterruptedException &#123;<br><span class="hljs-comment">//        System.out.println(Thread.currentThread().getName()+&quot;\t init come in&quot;);</span><br>        <span class="hljs-keyword">if</span>(fieldUpdater.compareAndSet(<span class="hljs-built_in">this</span>,Boolean.FALSE,Boolean.TRUE))&#123;<br>            System.out.println(Thread.currentThread().getName()+<span class="hljs-string">&quot;\t init doing&quot;</span>);<br>            TimeUnit.SECONDS.sleep(<span class="hljs-number">2</span>);<br>            System.out.println(Thread.currentThread().getName()+<span class="hljs-string">&quot;\t init end&quot;</span>);<br>        &#125;<span class="hljs-keyword">else</span>&#123;<br>            System.out.println(Thread.currentThread().getName()+<span class="hljs-string">&quot;\t 有其他线程正在初始化中&quot;</span>);<br>        &#125;<br>    &#125;<br>    AtomicReferenceFieldUpdater&lt;MyCard,Boolean&gt; fieldUpdater =<br>            AtomicReferenceFieldUpdater.newUpdater(MyCard.class,Boolean.class,<span class="hljs-string">&quot;flag&quot;</span>);<br>&#125;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">AtomicReferenceFieldUpdaterDemo</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> InterruptedException &#123;<br>        <span class="hljs-type">MyCard</span> <span class="hljs-variable">myCard</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">MyCard</span>();<br>        <span class="hljs-type">CountDownLatch</span> <span class="hljs-variable">cdl</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">CountDownLatch</span>(<span class="hljs-number">5</span>);<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">1</span>; i &lt;= <span class="hljs-number">5</span>; i++) &#123;<br>            <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(()-&gt; &#123;<br>                <span class="hljs-keyword">try</span> &#123;<br>                    myCard.init();<br>                &#125; <span class="hljs-keyword">catch</span> (InterruptedException e) &#123;<br>                    e.printStackTrace();<br>                &#125;<span class="hljs-keyword">finally</span> &#123;<br>                    cdl.countDown();<br>                &#125;<br>            &#125;,String.valueOf(i)).start();<br>        &#125;<br>        cdl.await();<br>        System.out.println(myCard.flag);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>synchronized , AtomicLong,LongAdder, LongAccumulator对比</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"> <br></code></pre></td></tr></table></figure>
+
+<p>LongAdder效率更高的原因：</p>
+<p><strong>化整为零</strong></p>
+<p>求和结果：Base+Cell[]</p>
+<p>LongAdder源码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">add</span><span class="hljs-params">(<span class="hljs-type">long</span> x)</span> &#123;<br>        Cell[] as; <span class="hljs-type">long</span> b, v; <span class="hljs-type">int</span> m; Cell a;<br>        <span class="hljs-keyword">if</span> ((as = cells) != <span class="hljs-literal">null</span> || !casBase(b = base, b + x)) &#123;<br>            <span class="hljs-type">boolean</span> <span class="hljs-variable">uncontended</span> <span class="hljs-operator">=</span> <span class="hljs-literal">true</span>;<br>            <span class="hljs-keyword">if</span> (as == <span class="hljs-literal">null</span> || (m = as.length - <span class="hljs-number">1</span>) &lt; <span class="hljs-number">0</span> ||<br>                (a = as[getProbe() &amp; m]) == <span class="hljs-literal">null</span> ||<br>                !(uncontended = a.cas(v = a.value, v + x)))<br>                longAccumulate(x, <span class="hljs-literal">null</span>, uncontended);<br>        &#125;<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Handles cases of updates involving initialization, resizing,</span><br><span class="hljs-comment">     * creating new Cells, and/or contention. See above for</span><br><span class="hljs-comment">     * explanation. This method suffers the usual non-modularity</span><br><span class="hljs-comment">     * problems of optimistic retry code, relying on rechecked sets of</span><br><span class="hljs-comment">     * reads.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> x the value</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> fn the update function, or null for add (this convention</span><br><span class="hljs-comment">     * avoids the need for an extra field or function in LongAdder).</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> wasUncontended false if CAS failed before call</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">final</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">longAccumulate</span><span class="hljs-params">(<span class="hljs-type">long</span> x, LongBinaryOperator fn,</span><br><span class="hljs-params">                              <span class="hljs-type">boolean</span> wasUncontended)</span> &#123;<br>        <span class="hljs-type">int</span> h;<br>        <span class="hljs-keyword">if</span> ((h = getProbe()) == <span class="hljs-number">0</span>) &#123;<br>            ThreadLocalRandom.current(); <span class="hljs-comment">// force initialization</span><br>            h = getProbe();<br>            wasUncontended = <span class="hljs-literal">true</span>;<br>        &#125;<br>        <span class="hljs-type">boolean</span> <span class="hljs-variable">collide</span> <span class="hljs-operator">=</span> <span class="hljs-literal">false</span>;                <span class="hljs-comment">// True if last slot nonempty</span><br>        <span class="hljs-keyword">for</span> (;;) &#123;<br>            Cell[] as; Cell a; <span class="hljs-type">int</span> n; <span class="hljs-type">long</span> v;<br>            <span class="hljs-keyword">if</span> ((as = cells) != <span class="hljs-literal">null</span> &amp;&amp; (n = as.length) &gt; <span class="hljs-number">0</span>) &#123;<br>                <span class="hljs-keyword">if</span> ((a = as[(n - <span class="hljs-number">1</span>) &amp; h]) == <span class="hljs-literal">null</span>) &#123;<br>                    <span class="hljs-keyword">if</span> (cellsBusy == <span class="hljs-number">0</span>) &#123;       <span class="hljs-comment">// Try to attach new Cell</span><br>                        <span class="hljs-type">Cell</span> <span class="hljs-variable">r</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Cell</span>(x);   <span class="hljs-comment">// Optimistically create</span><br>                        <span class="hljs-keyword">if</span> (cellsBusy == <span class="hljs-number">0</span> &amp;&amp; casCellsBusy()) &#123;<br>                            <span class="hljs-type">boolean</span> <span class="hljs-variable">created</span> <span class="hljs-operator">=</span> <span class="hljs-literal">false</span>;<br>                            <span class="hljs-keyword">try</span> &#123;               <span class="hljs-comment">// Recheck under lock</span><br>                                Cell[] rs; <span class="hljs-type">int</span> m, j;<br>                                <span class="hljs-keyword">if</span> ((rs = cells) != <span class="hljs-literal">null</span> &amp;&amp;<br>                                    (m = rs.length) &gt; <span class="hljs-number">0</span> &amp;&amp;<br>                                    rs[j = (m - <span class="hljs-number">1</span>) &amp; h] == <span class="hljs-literal">null</span>) &#123;<br>                                    rs[j] = r;<br>                                    created = <span class="hljs-literal">true</span>;<br>                                &#125;<br>                            &#125; <span class="hljs-keyword">finally</span> &#123;<br>                                cellsBusy = <span class="hljs-number">0</span>;<br>                            &#125;<br>                            <span class="hljs-keyword">if</span> (created)<br>                                <span class="hljs-keyword">break</span>;<br>                            <span class="hljs-keyword">continue</span>;           <span class="hljs-comment">// Slot is now non-empty</span><br>                        &#125;<br>                    &#125;<br>                    collide = <span class="hljs-literal">false</span>;<br>                &#125;<br>                <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (!wasUncontended)       <span class="hljs-comment">// CAS already known to fail</span><br>                    wasUncontended = <span class="hljs-literal">true</span>;      <span class="hljs-comment">// Continue after rehash</span><br>                <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (a.cas(v = a.value, ((fn == <span class="hljs-literal">null</span>) ? v + x :<br>                                             fn.applyAsLong(v, x))))<br>                    <span class="hljs-keyword">break</span>;<br>                <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (n &gt;= NCPU || cells != as)<br>                    collide = <span class="hljs-literal">false</span>;            <span class="hljs-comment">// At max size or stale</span><br>                <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (!collide)<br>                    collide = <span class="hljs-literal">true</span>;<br>                <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (cellsBusy == <span class="hljs-number">0</span> &amp;&amp; casCellsBusy()) &#123;<br>                    <span class="hljs-keyword">try</span> &#123;<br>                        <span class="hljs-keyword">if</span> (cells == as) &#123;      <span class="hljs-comment">// Expand table unless stale</span><br>                            Cell[] rs = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Cell</span>[n &lt;&lt; <span class="hljs-number">1</span>];<br>                            <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; n; ++i)<br>                                rs[i] = as[i];<br>                            cells = rs;<br>                        &#125;<br>                    &#125; <span class="hljs-keyword">finally</span> &#123;<br>                        cellsBusy = <span class="hljs-number">0</span>;<br>                    &#125;<br>                    collide = <span class="hljs-literal">false</span>;<br>                    <span class="hljs-keyword">continue</span>;                   <span class="hljs-comment">// Retry with expanded table</span><br>                &#125;<br>                h = advanceProbe(h);<br>            &#125;<br>            <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (cellsBusy == <span class="hljs-number">0</span> &amp;&amp; cells == as &amp;&amp; casCellsBusy()) &#123;<br>                <span class="hljs-type">boolean</span> <span class="hljs-variable">init</span> <span class="hljs-operator">=</span> <span class="hljs-literal">false</span>;<br>                <span class="hljs-keyword">try</span> &#123;                           <span class="hljs-comment">// Initialize table</span><br>                    <span class="hljs-keyword">if</span> (cells == as) &#123;<br>                        Cell[] rs = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Cell</span>[<span class="hljs-number">2</span>];<br>                        rs[h &amp; <span class="hljs-number">1</span>] = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Cell</span>(x);<br>                        cells = rs;<br>                        init = <span class="hljs-literal">true</span>;<br>                    &#125;<br>                &#125; <span class="hljs-keyword">finally</span> &#123;<br>                    cellsBusy = <span class="hljs-number">0</span>;<br>                &#125;<br>                <span class="hljs-keyword">if</span> (init)<br>                    <span class="hljs-keyword">break</span>;<br>            &#125;<br>            <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (casBase(v = base, ((fn == <span class="hljs-literal">null</span>) ? v + x :<br>                                        fn.applyAsLong(v, x))))<br>                <span class="hljs-keyword">break</span>;                          <span class="hljs-comment">// Fall back on using base</span><br>        &#125;<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>小结：<ol>
+<li>AtomicLong<ol>
+<li>原理：<ol>
+<li>CAS+自旋</li>
+<li>incremenAndGet</li>
+</ol>
+</li>
+<li>场景：<ol>
+<li>低并发下的全局计算</li>
+<li>AtomicLong能保证并发情况下计算准确性，内部通过CAS来解决并发安全性问题</li>
+</ol>
+</li>
+<li>缺陷:<ol>
+<li>高并发下性能急剧下降，原因：自旋会成为瓶颈</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>LongAdder<ol>
+<li>原理：<ol>
+<li>CAS+BASE+Cell数组分散</li>
+<li>空间换时间并分散了热点数据</li>
+</ol>
+</li>
+<li>场景：<ol>
+<li>高并发下的全局计算</li>
+</ol>
+</li>
+<li>缺陷：<ol>
+<li>sum求和后还有计算线程计算的话，结果不准，需所有线程完成后求和，最终结果准确。</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+</li>
+</ul>
+<h2 id="10-ThreadLocal"><a href="#10-ThreadLocal" class="headerlink" title="10. ThreadLocal"></a>10. ThreadLocal</h2><p>每个线程都有自己的专属本地变量副本，人手一份。解决线程安全问题。</p>
+<p>Thread </p>
+<p>ThreadLocal.ThreadLocalMap localMap &#x3D; null</p>
+<p>ThreadLocalMap&lt;WeakRefrence<ThreadLocal>,Object&gt; </p>
+<p>演变：</p>
+<p><a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1ar4y1x727?p=100&spm_id_from=pageDriver&vd_source=225ceefcd8902367a0cec6eb7334a132&t=469.2">https://www.bilibili.com/video/BV1ar4y1x727?p=100&spm_id_from&#x3D;pageDriver&amp;vd_source&#x3D;225ceefcd8902367a0cec6eb7334a132&amp;t&#x3D;469.2</a></p>
+<p>before： 群雄逐鹿起纷争</p>
+<p>after： 人手一份天下安</p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2017.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p><strong>注意</strong></p>
+<p>使用完ThreadLocal后，需使用ThreadLocal.remove()清空，防止内存泄漏（因为ThreadLocalMap中的k是弱引用，但是V是强引用，会导致V不能被回收，需要手动remove去将V设置为Null，进行手动回收）。</p>
+<p>Thread-ThreadLocal-ThrealocalMap三者关系：</p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2018.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p>几个引用：</p>
+<ol>
+<li>强引用 Reference （默认创建的对象均为强引用，垃圾回收不能回收）</li>
+<li>软引用  SoftReference 空间充足时GC不回收，空间不足GC会回收</li>
+<li>弱引用  WareReference 只要有GC，就会回收</li>
+<li>虚引用  PhantomReference  get一致返回null，需配合引用队列使用ReferenceQueue使用</li>
+</ol>
+<p>软引用和弱引用应用场景：</p>
+<p>图片高速缓存。防止OOM</p>
+<p>GCRoot 和 四个引用的关系</p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2019.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p>为什么源码中ThreadLocalMap的K使用弱引用：减少内存泄漏  </p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2020.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<ul>
+<li><strong>使用小结</strong></li>
+</ul>
+<ol>
+<li>使用 <code>ThreadLocal.*withInitial*(() -&gt; 0)</code> 初始化</li>
+<li>建议使用static 修饰ThreadLocal</li>
+<li>一定要记得使用Thread.remove()方法进行清理，防止内存泄漏。</li>
+</ol>
+<p>ThreadLocal小结：</p>
+<ol>
+<li>TL并不解决线程间共享数据问题</li>
+<li>适用于变量在线程间隔离且在方法间共享场景</li>
+<li>通过隐式的在不同线程内创建独立副本，避免线程安全问题。</li>
+<li>每个线程持有一个只属于自己的Map，并维护TheadLocalMap对象与具体实例的映射，该Map只被持有它的线程访问，故不存在线程安全问题。</li>
+<li>ThreadLocalMap的Entry对ThreadLocalMap为弱引用，避免了ThreadLocal对象无法被回收问题。</li>
+<li>都会通过remove()- expungStaleEntry,cleanSomeSlots,replcaceStateEntry三个三个方法回收键为null的entry对象的值，防止内存泄漏,属于安全加固方法。</li>
+</ol>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2021.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<h2 id="Java对象内存布局与对象头"><a href="#Java对象内存布局与对象头" class="headerlink" title="Java对象内存布局与对象头"></a>Java对象内存布局与对象头</h2><p>new Object在JVM中存放位置 和 构成</p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2022.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p>对象实例构成部分：</p>
+<ol>
+<li>对象头<ol>
+<li>对象标记Mark Word<ol>
+<li>HashCode</li>
+<li>分代年龄</li>
+<li>锁标记等信息</li>
+</ol>
+</li>
+<li>类元信息（类型指针）Class Pointer</li>
+<li>长度 length（对象数组专有）</li>
+</ol>
+</li>
+<li>实例数据</li>
+<li>对其填充</li>
+</ol>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2023.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2024.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<h3 id="对象标记的结构组成"><a href="#对象标记的结构组成" class="headerlink" title="对象标记的结构组成"></a>对象标记的结构组成</h3><p><img src="/img/Java-JUC-IMGS/Untitled%2025.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2026.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2027.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2028.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2029.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<h3 id="类元信息-类型指针）Class-Pointer"><a href="#类元信息-类型指针）Class-Pointer" class="headerlink" title="类元信息 (类型指针）Class Pointer"></a>类元信息 (类型指针）Class Pointer</h3><p>Object o &#x3D; new Object</p>
+<p>Object  即为类型指针</p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2030.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p>  对象指向它的类元数据的指针，虚拟机通过这个指针来确定这个对象属于那个类的实例。</p>
+<h3 id="JOL打印对象头信息"><a href="#JOL打印对象头信息" class="headerlink" title="JOL打印对象头信息"></a>JOL打印对象头信息</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> org.openjdk.jol.info.ClassLayout;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">ObjectJOLDemo</span> &#123;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        <span class="hljs-type">Object</span> <span class="hljs-variable">o</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Object</span>();<br>        System.out.println(ClassLayout.parseInstance(o).toPrintable());<br>        <span class="hljs-type">Consumer</span> <span class="hljs-variable">consumer</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Consumer</span>();<br>        System.out.println(ClassLayout.parseInstance(consumer).toPrintable());<br>    &#125;<br>&#125;<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Consumer</span>&#123;<br>		<span class="hljs-comment">// 1. 第一种情况，无属性时，dv&#x27;xd&#x27;tb</span><br>    <span class="hljs-type">int</span> age;<br>    <span class="hljs-type">boolean</span> flag;<br>&#125; <br></code></pre></td></tr></table></figure>
+
+<p>输出信息：</p>
+<figure class="highlight prolog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs prolog">java.lang.<span class="hljs-symbol">Object</span> object internals:<br> <span class="hljs-symbol">OFFSET</span>  <span class="hljs-symbol">SIZE</span>   <span class="hljs-symbol">TYPE</span> <span class="hljs-symbol">DESCRIPTION</span>                               <span class="hljs-symbol">VALUE</span><br>      <span class="hljs-number">0</span>     <span class="hljs-number">4</span>        (object header)                           <span class="hljs-number">01</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> (<span class="hljs-number">00000001</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span>) (<span class="hljs-number">1</span>)<br>      <span class="hljs-number">4</span>     <span class="hljs-number">4</span>        (object header)                           <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> (<span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span>) (<span class="hljs-number">0</span>)<br>      <span class="hljs-number">8</span>     <span class="hljs-number">4</span>        (object header)                           <span class="hljs-number">28</span> <span class="hljs-number">0</span>f <span class="hljs-number">00</span> <span class="hljs-number">00</span> (<span class="hljs-number">00101000</span> <span class="hljs-number">00001111</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span>) (<span class="hljs-number">3880</span>)<br>     <span class="hljs-number">12</span>     <span class="hljs-number">4</span>        (loss due to the next object alignment)<br><span class="hljs-symbol">Instance</span> size: <span class="hljs-number">16</span> bytes<br><span class="hljs-symbol">Space</span> losses: <span class="hljs-number">0</span> bytes internal + <span class="hljs-number">4</span> bytes external = <span class="hljs-number">4</span> bytes total<br><br>com.company.<span class="hljs-symbol">Consumer</span> object internals:<br> <span class="hljs-symbol">OFFSET</span>  <span class="hljs-symbol">SIZE</span>      <span class="hljs-symbol">TYPE</span> <span class="hljs-symbol">DESCRIPTION</span>                               <span class="hljs-symbol">VALUE</span><br>      <span class="hljs-number">0</span>     <span class="hljs-number">4</span>           (object header)                           <span class="hljs-number">01</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> (<span class="hljs-number">00000001</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span>) (<span class="hljs-number">1</span>)<br>      <span class="hljs-number">4</span>     <span class="hljs-number">4</span>           (object header)                           <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> <span class="hljs-number">00</span> (<span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span>) (<span class="hljs-number">0</span>)<br>      <span class="hljs-number">8</span>     <span class="hljs-number">4</span>           (object header)                           <span class="hljs-number">00</span> <span class="hljs-number">8</span>a <span class="hljs-number">07</span> <span class="hljs-number">00</span> (<span class="hljs-number">00000000</span> <span class="hljs-number">10001010</span> <span class="hljs-number">00000111</span> <span class="hljs-number">00000000</span>) (<span class="hljs-number">494080</span>)<br>     <span class="hljs-number">12</span>     <span class="hljs-number">4</span>       int <span class="hljs-symbol">Consumer</span>.age                              <span class="hljs-number">0</span><br>     <span class="hljs-number">16</span>     <span class="hljs-number">1</span>   boolean <span class="hljs-symbol">Consumer</span>.flag                             false<br>     <span class="hljs-number">17</span>     <span class="hljs-number">7</span>           (loss due to the next object alignment)<br><span class="hljs-symbol">Instance</span> size: <span class="hljs-number">24</span> bytes<br><span class="hljs-symbol">Space</span> losses: <span class="hljs-number">0</span> bytes internal + <span class="hljs-number">7</span> bytes external = <span class="hljs-number">7</span> bytes total<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight prolog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs prolog">java -<span class="hljs-symbol">XX</span>:+<span class="hljs-symbol">PrintCommandLineFlags</span> -version<br>-<span class="hljs-symbol">XX</span>:<span class="hljs-symbol">InitialHeapSize</span>=<span class="hljs-number">1073741824</span> -<span class="hljs-symbol">XX</span>:<span class="hljs-symbol">MaxHeapSize</span>=<span class="hljs-number">17179869184</span> -<span class="hljs-symbol">XX</span>:+<span class="hljs-symbol">PrintCommandLineFlags</span> -<span class="hljs-symbol">XX</span>:+<span class="hljs-symbol">UseCompressedClassPointers</span> -<span class="hljs-symbol">XX</span>:+<span class="hljs-symbol">UseCompressedOops</span> -<span class="hljs-symbol">XX</span>:+<span class="hljs-symbol">UseParallelGC</span><br>openjdk version <span class="hljs-string">&quot;1.8.0_312&quot;</span><br></code></pre></td></tr></table></figure>
+
+<p>java 默认开启了类型指针压缩</p>
+<ol>
+<li><p>开启压缩后对象头占用 8(mark_word)+4(class_pointer)+4(对其补充) &#x3D; 16字节</p>
+</li>
+<li><p>关闭压缩（-XX:-UseCompressedClassPointers）</p>
+<p> 对象头占用：8(mark_word)+8(class_pointer)&#x3D;16字节</p>
+</li>
+</ol>
+<p>结论： 对象头占用16个字节。</p>
+<h2 id="12-synchronized与锁升级"><a href="#12-synchronized与锁升级" class="headerlink" title="12. synchronized与锁升级"></a>12. synchronized与锁升级</h2><p><a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1ar4y1x727?p=121&share_source=copy_pc">https://www.bilibili.com/video/BV1ar4y1x727?p=121&share_source&#x3D;copy_pc</a></p>
+<p>synchronized用的锁是存在Java对象头里的Mark Word中，锁升级主要依赖MarkWord中锁标志位 和 释放偏向锁标志位。</p>
+<p>锁状态升级和对象头(mark-word)中的锁位关系 </p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2031.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2032.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p> 无锁： 0 01</p>
+<ol>
+<li><p><strong>偏向锁：单线程竞争 1 01</strong></p>
+<ol>
+<li>当线程A第一次竞争到锁时，通过操作修改MarkWord中的偏向线程ID、偏向模式。如果不存在其他线程竞争，则持有偏向锁的线程将永远不需要同步。</li>
+<li>当一个对象一直被同一个线程竞争得到。此时锁的等级为偏向锁。（由于只有一个线程，那么该线程在后续访问时便自动获得锁）</li>
+</ol>
+</li>
+<li><p><strong>轻量级锁  0 00</strong></p>
+<ol>
+<li><p>是什么？多线程竞争，但任一时刻最多只有一个线程竞争;不存在过于激烈，且没有线程阻塞。</p>
+</li>
+<li><p>主要作用</p>
+<ol>
+<li>有线程参与竞争，但是获取锁的冲突时间极短</li>
+<li>本质就是自旋锁CAS.</li>
+</ol>
+<p> 作用总结：</p>
+<ol>
+<li>目的是在没有多线程竞争下，通过CAS减少重量级锁使用操作系统互斥量产生的性能消耗；先自旋，CAS自旋到达一定次数才升级阻塞（重量级锁）。</li>
+<li>升级时机：当关闭偏向锁功能或多线程竞争偏向锁会导致锁升级为轻量锁。</li>
+</ol>
+</li>
+<li><p>与偏向锁区别：</p>
+<ol>
+<li>争夺轻量锁失败时，自旋尝试抢占锁。</li>
+<li>轻量锁每次退出同步块都需要释放锁，而偏向锁在竞争发生时才释放锁。</li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p><strong>重量级锁 010 指向互斥量的指针（monitor对象）</strong></p>
+<ol>
+<li>大量线程参与锁竞争，冲突性很高</li>
+</ol>
+</li>
+<li><p><strong>小结</strong>：</p>
+<ol>
+<li><p>锁升级后hashcode去哪了？</p>
+<ol>
+<li>无锁状态下，hashcode和gc-age存放于对象头的mark-word中</li>
+<li>偏向锁和hashCode无法一起共存，及对象计算过hashcode()则该对象无法被设置为偏向锁，直接升级为轻量级锁。若当前对象处于偏向锁时，再计算hashcode，则该对象会立刻升级为重量级锁。 </li>
+<li>升级为轻量锁时，JVM会在当前线程的栈中创建一个锁记录（Lock Record) 用于存储对象的MarkWord拷贝。该拷贝可包含hashcode，gc-age等，释放锁后将这些信息写回到对象头中。轻量级锁可以与hashcode共存。</li>
+<li>升级为重量级锁后， MarkWord保存的重量级锁指针，代表重量级锁的ObjectMonitor类里有字段记录非加锁状态下的MarkWord，锁释放后，也会将信息写回到对象头中。</li>
+</ol>
+</li>
+<li><p>各个锁优缺点，synchronized锁升级和实现原理</p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2033.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+</li>
+<li><p>JIT-锁消除-锁粗化</p>
+</li>
+</ol>
+<p> <strong>锁升级过程和逻辑图</strong> </p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2034.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+</li>
+</ol>
+<h2 id="13-AbstractQueuedSynchronizer之AQS"><a href="#13-AbstractQueuedSynchronizer之AQS" class="headerlink" title="13. AbstractQueuedSynchronizer之AQS"></a>13. AbstractQueuedSynchronizer之A<strong>QS</strong></h2><h3 id="理论知识"><a href="#理论知识" class="headerlink" title="理论知识"></a>理论知识</h3><ol>
+<li><p>是什么?</p>
+<ol>
+<li><p>AQS 抽象队列同步器</p>
+</li>
+<li><p>用来实现锁或者其他同步组件的公共基础部分的抽象实现，是重量级基础框架及整个JUC体系基石，主要用于解决分配给”谁“的问题。</p>
+</li>
+<li><p>整体就是抽象一个FIFO队列来完成资源获取线程排队工作，通过Int变量表示持有锁的状态。</p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2035.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+</li>
+<li><p>基本结构：</p>
+<p> 源码：</p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2036.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p> CLH队列（双向队列）尾入头出</p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2037.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p> AQS体系结构</p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2038.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+</li>
+<li><p>小结：</p>
+<ol>
+<li>AQS&#x3D;state（状态变量）+ CLH双端队列</li>
+<li>有阻塞就需要排队，实现排队就必然有队列。</li>
+<li><strong>volatile+cas机制实现了锁模板，保证了代码的同步性和可见性，而AQS封装了线程阻塞等待挂起，解锁唤醒其他线程的逻辑，AQS子类只需根据状态变量（state）判断获取锁，是否释放锁，使用LockSupport挂起，唤醒线程即可。</strong></li>
+</ol>
+</li>
+</ol>
+</li>
+<li><p>AQS-内部类Node</p>
+<ol>
+<li><p>结构和属性说明：</p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2039.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2040.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+</li>
+</ol>
+</li>
+<li><p>ReentrantLock为例</p>
+<ol>
+<li><p>公平锁</p>
+</li>
+<li><p>非公平锁</p>
+<p> 两者区别：</p>
+<p> 公平锁比非公平锁多了一个判断列队中是否有前置Node <code>hasQueuedPredecessors()</code>，如果有则进入AQS队列进行排队，非公平则不判断直接进行抢锁。</p>
+<p> 源码</p>
+ <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Acquires in exclusive mode, ignoring interrupts.  Implemented</span><br><span class="hljs-comment">     * by invoking at least once &#123;<span class="hljs-doctag">@link</span> #tryAcquire&#125;,</span><br><span class="hljs-comment">     * returning on success.  Otherwise the thread is queued, possibly</span><br><span class="hljs-comment">     * repeatedly blocking and unblocking, invoking &#123;<span class="hljs-doctag">@link</span></span><br><span class="hljs-comment">     * #tryAcquire&#125; until success.  This method can be used</span><br><span class="hljs-comment">     * to implement method &#123;<span class="hljs-doctag">@link</span> Lock#lock&#125;.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> arg the acquire argument.  This value is conveyed to</span><br><span class="hljs-comment">     *        &#123;<span class="hljs-doctag">@link</span> #tryAcquire&#125; but is otherwise uninterpreted and</span><br><span class="hljs-comment">     *        can represent anything you like.</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-meta">@ReservedStackAccess</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">acquire</span><span class="hljs-params">(<span class="hljs-type">int</span> arg)</span> &#123;<br>        <span class="hljs-keyword">if</span> (!tryAcquire(arg) &amp;&amp;<br>            acquireQueued(addWaiter(Node.EXCLUSIVE), arg))<br>            selfInterrupt();<br>    &#125;<br></code></pre></td></tr></table></figure></li>
+</ol>
+</li>
+</ol>
+<h3 id="ReentrantLock源码解析"><a href="#ReentrantLock源码解析" class="headerlink" title="ReentrantLock源码解析"></a>ReentrantLock源码解析</h3><p>总体步骤：非公平为例</p>
+<ol>
+<li>重试获取锁（cas获取state状态为）</li>
+<li>获取不到锁进入队列进行排队(addWaiter)</li>
+<li>队列中由上一个进程完成后，触发LockSupport.unpeak(thread)唤醒触发下一个线程的运行或锁的再次争抢。</li>
+</ol>
+<p>NonfairSync extends Sync extends AQS </p>
+<p>lock.lock()</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">NonfairSync</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">Sync</span> &#123;<br>        <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">long</span> <span class="hljs-variable">serialVersionUID</span> <span class="hljs-operator">=</span> <span class="hljs-number">7316153563782823691L</span>;<br><br>        <span class="hljs-comment">/**</span><br><span class="hljs-comment">         * Performs lock.  Try immediate barge, backing up to normal</span><br><span class="hljs-comment">         * acquire on failure.</span><br><span class="hljs-comment">         */</span><br>        <span class="hljs-meta">@ReservedStackAccess</span><br>        <span class="hljs-keyword">final</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">lock</span><span class="hljs-params">()</span> &#123;<br>            <span class="hljs-keyword">if</span> (compareAndSetState(<span class="hljs-number">0</span>, <span class="hljs-number">1</span>))<br>                setExclusiveOwnerThread(Thread.currentThread());<br>            <span class="hljs-keyword">else</span><br>                acquire(<span class="hljs-number">1</span>);<br>        &#125;<br><br>        <span class="hljs-keyword">protected</span> <span class="hljs-keyword">final</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">tryAcquire</span><span class="hljs-params">(<span class="hljs-type">int</span> acquires)</span> &#123;<br>            <span class="hljs-keyword">return</span> nonfairTryAcquire(acquires);<br>        &#125;<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<p>acquire(1)： 整体步骤：</p>
+<ol>
+<li>尝试获取锁，</li>
+<li>如果尝试获取锁失败，则加入等待队列的队尾中。</li>
+<li>在队列中排队，无限判断前一个线程是否Head，如果是Head  尝试获取锁执行，若不是在Head则利用LockSupport.peak()对线程进行挂起，直到其他线程完成后unlock锁后，当前线程排到Head再进行抢占锁。</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@ReservedStackAccess</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">acquire</span><span class="hljs-params">(<span class="hljs-type">int</span> arg)</span> &#123;<br>        <span class="hljs-keyword">if</span> (!tryAcquire(arg) &amp;&amp;<br>            acquireQueued(addWaiter(Node.EXCLUSIVE), arg))<br>            selfInterrupt();<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<pre><code class="hljs"> nonfairTryAcquire(1)
+</code></pre>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment">         * Performs non-fair tryLock.  tryAcquire is implemented in</span><br><span class="hljs-comment">         * subclasses, but both need nonfair try for trylock method.</span><br><span class="hljs-comment">         */</span><br>        <span class="hljs-meta">@ReservedStackAccess</span><br>        <span class="hljs-keyword">final</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">nonfairTryAcquire</span><span class="hljs-params">(<span class="hljs-type">int</span> acquires)</span> &#123;<br>            <span class="hljs-keyword">final</span> <span class="hljs-type">Thread</span> <span class="hljs-variable">current</span> <span class="hljs-operator">=</span> Thread.currentThread();<br>            <span class="hljs-type">int</span> <span class="hljs-variable">c</span> <span class="hljs-operator">=</span> getState();<br>            <span class="hljs-keyword">if</span> (c == <span class="hljs-number">0</span>) &#123;<br>                <span class="hljs-keyword">if</span> (compareAndSetState(<span class="hljs-number">0</span>, acquires)) &#123;<br>                    setExclusiveOwnerThread(current);<br>                    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>                &#125;<br>            &#125;<br>            <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (current == getExclusiveOwnerThread()) &#123;<br>                <span class="hljs-type">int</span> <span class="hljs-variable">nextc</span> <span class="hljs-operator">=</span> c + acquires;<br>                <span class="hljs-keyword">if</span> (nextc &lt; <span class="hljs-number">0</span>) <span class="hljs-comment">// overflow</span><br>                    <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Error</span>(<span class="hljs-string">&quot;Maximum lock count exceeded&quot;</span>);<br>                setState(nextc);<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>            &#125;<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>        &#125;<br></code></pre></td></tr></table></figure>
+
+<p>addWaiter(Node mode)</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Creates and enqueues node for current thread and given mode.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> mode Node.EXCLUSIVE for exclusive, Node.SHARED for shared</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@return</span> the new node</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">private</span> Node <span class="hljs-title function_">addWaiter</span><span class="hljs-params">(Node mode)</span> &#123;<br>        <span class="hljs-type">Node</span> <span class="hljs-variable">node</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Node</span>(Thread.currentThread(), mode);<br>        <span class="hljs-comment">// Try the fast path of enq; backup to full enq on failure</span><br>        <span class="hljs-type">Node</span> <span class="hljs-variable">pred</span> <span class="hljs-operator">=</span> tail;<br>        <span class="hljs-keyword">if</span> (pred != <span class="hljs-literal">null</span>) &#123;<br>            node.prev = pred;<br>            <span class="hljs-keyword">if</span> (compareAndSetTail(pred, node)) &#123;<br>                pred.next = node;<br>                <span class="hljs-keyword">return</span> node;<br>            &#125;<br>        &#125;<br>        enq(node);<br>        <span class="hljs-keyword">return</span> node;<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<p>acquireQueued(final Node node, int arg)</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Acquires in exclusive uninterruptible mode for thread already in</span><br><span class="hljs-comment">     * queue. Used by condition wait methods as well as acquire.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> node the node</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> arg the acquire argument</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@return</span> &#123;<span class="hljs-doctag">@code</span> true&#125; if interrupted while waiting</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-meta">@ReservedStackAccess</span><br>    <span class="hljs-keyword">final</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">acquireQueued</span><span class="hljs-params">(<span class="hljs-keyword">final</span> Node node, <span class="hljs-type">int</span> arg)</span> &#123;<br>        <span class="hljs-type">boolean</span> <span class="hljs-variable">failed</span> <span class="hljs-operator">=</span> <span class="hljs-literal">true</span>;<br>        <span class="hljs-keyword">try</span> &#123;<br>            <span class="hljs-type">boolean</span> <span class="hljs-variable">interrupted</span> <span class="hljs-operator">=</span> <span class="hljs-literal">false</span>;<br>            <span class="hljs-keyword">for</span> (;;) &#123;<br>                <span class="hljs-keyword">final</span> <span class="hljs-type">Node</span> <span class="hljs-variable">p</span> <span class="hljs-operator">=</span> node.predecessor();<br>                <span class="hljs-keyword">if</span> (p == head &amp;&amp; tryAcquire(arg)) &#123;<br>                    setHead(node);<br>                    p.next = <span class="hljs-literal">null</span>; <span class="hljs-comment">// help GC</span><br>                    failed = <span class="hljs-literal">false</span>;<br>                    <span class="hljs-keyword">return</span> interrupted;<br>                &#125;<br>                <span class="hljs-keyword">if</span> (shouldParkAfterFailedAcquire(p, node) &amp;&amp;<br>                    parkAndCheckInterrupt())<br>                    interrupted = <span class="hljs-literal">true</span>;<br>            &#125;<br>        &#125; <span class="hljs-keyword">finally</span> &#123;<br>            <span class="hljs-keyword">if</span> (failed)<br>                cancelAcquire(node);<br>        &#125;<br>    &#125;<br><br>  <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Checks and updates status for a node that failed to acquire.</span><br><span class="hljs-comment">     * Returns true if thread should block. This is the main signal</span><br><span class="hljs-comment">     * control in all acquire loops.  Requires that pred == node.prev.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> pred node&#x27;s predecessor holding status</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> node the node</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@return</span> &#123;<span class="hljs-doctag">@code</span> true&#125; if thread should block</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">shouldParkAfterFailedAcquire</span><span class="hljs-params">(Node pred, Node node)</span> &#123;<br>        <span class="hljs-type">int</span> <span class="hljs-variable">ws</span> <span class="hljs-operator">=</span> pred.waitStatus;<br>        <span class="hljs-keyword">if</span> (ws == Node.SIGNAL)<br>            <span class="hljs-comment">/*</span><br><span class="hljs-comment">             * This node has already set status asking a release</span><br><span class="hljs-comment">             * to signal it, so it can safely park.</span><br><span class="hljs-comment">             */</span><br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>        <span class="hljs-keyword">if</span> (ws &gt; <span class="hljs-number">0</span>) &#123;<br>            <span class="hljs-comment">/*</span><br><span class="hljs-comment">             * Predecessor was cancelled. Skip over predecessors and</span><br><span class="hljs-comment">             * indicate retry.</span><br><span class="hljs-comment">             */</span><br>            <span class="hljs-keyword">do</span> &#123;<br>                node.prev = pred = pred.prev;<br>            &#125; <span class="hljs-keyword">while</span> (pred.waitStatus &gt; <span class="hljs-number">0</span>);<br>            pred.next = node;<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-comment">/*</span><br><span class="hljs-comment">             * waitStatus must be 0 or PROPAGATE.  Indicate that we</span><br><span class="hljs-comment">             * need a signal, but don&#x27;t park yet.  Caller will need to</span><br><span class="hljs-comment">             * retry to make sure it cannot acquire before parking.</span><br><span class="hljs-comment">             */</span><br>            compareAndSetWaitStatus(pred, ws, Node.SIGNAL);<br>        &#125;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>    &#125;<br><br>     <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Convenience method to park and then check if interrupted</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@return</span> &#123;<span class="hljs-doctag">@code</span> true&#125; if interrupted</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">parkAndCheckInterrupt</span><span class="hljs-params">()</span> &#123;<br>        LockSupport.park(<span class="hljs-built_in">this</span>);<br>        <span class="hljs-keyword">return</span> Thread.interrupted();<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<p>cancelAcquire()</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">// Utilities for various versions of acquire</span><br><br>  <span class="hljs-comment">/**</span><br><span class="hljs-comment">   * Cancels an ongoing attempt to acquire.</span><br><span class="hljs-comment">   *</span><br><span class="hljs-comment">   * <span class="hljs-doctag">@param</span> node the node</span><br><span class="hljs-comment">   */</span><br>  <span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">cancelAcquire</span><span class="hljs-params">(Node node)</span> &#123;<br>      <span class="hljs-comment">// Ignore if node doesn&#x27;t exist</span><br>      <span class="hljs-keyword">if</span> (node == <span class="hljs-literal">null</span>)<br>          <span class="hljs-keyword">return</span>;<br><br>      node.thread = <span class="hljs-literal">null</span>;<br><br>      <span class="hljs-comment">// Skip cancelled predecessors</span><br>      <span class="hljs-type">Node</span> <span class="hljs-variable">pred</span> <span class="hljs-operator">=</span> node.prev;<br>      <span class="hljs-keyword">while</span> (pred.waitStatus &gt; <span class="hljs-number">0</span>)<br>          node.prev = pred = pred.prev;<br><br>      <span class="hljs-comment">// predNext is the apparent node to unsplice. CASes below will</span><br>      <span class="hljs-comment">// fail if not, in which case, we lost race vs another cancel</span><br>      <span class="hljs-comment">// or signal, so no further action is necessary.</span><br>      <span class="hljs-type">Node</span> <span class="hljs-variable">predNext</span> <span class="hljs-operator">=</span> pred.next;<br><br>      <span class="hljs-comment">// Can use unconditional write instead of CAS here.</span><br>      <span class="hljs-comment">// After this atomic step, other Nodes can skip past us.</span><br>      <span class="hljs-comment">// Before, we are free of interference from other threads.</span><br>      node.waitStatus = Node.CANCELLED;<br><br>      <span class="hljs-comment">// If we are the tail, remove ourselves.</span><br>      <span class="hljs-keyword">if</span> (node == tail &amp;&amp; compareAndSetTail(node, pred)) &#123;<br>          compareAndSetNext(pred, predNext, <span class="hljs-literal">null</span>);<br>      &#125; <span class="hljs-keyword">else</span> &#123;<br>          <span class="hljs-comment">// If successor needs signal, try to set pred&#x27;s next-link</span><br>          <span class="hljs-comment">// so it will get one. Otherwise wake it up to propagate.</span><br>          <span class="hljs-type">int</span> ws;<br>          <span class="hljs-keyword">if</span> (pred != head &amp;&amp;<br>              ((ws = pred.waitStatus) == Node.SIGNAL ||<br>               (ws &lt;= <span class="hljs-number">0</span> &amp;&amp; compareAndSetWaitStatus(pred, ws, Node.SIGNAL))) &amp;&amp;<br>              pred.thread != <span class="hljs-literal">null</span>) &#123;<br>              <span class="hljs-type">Node</span> <span class="hljs-variable">next</span> <span class="hljs-operator">=</span> node.next;<br>              <span class="hljs-keyword">if</span> (next != <span class="hljs-literal">null</span> &amp;&amp; next.waitStatus &lt;= <span class="hljs-number">0</span>)<br>                  compareAndSetNext(pred, predNext, next);<br>          &#125; <span class="hljs-keyword">else</span> &#123;<br>              unparkSuccessor(node);<br>          &#125;<br><br>          node.next = node; <span class="hljs-comment">// help GC</span><br>      &#125;<br>  &#125;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment">   * Wakes up node&#x27;s successor, if one exists.</span><br><span class="hljs-comment">   *</span><br><span class="hljs-comment">   * <span class="hljs-doctag">@param</span> node the node</span><br><span class="hljs-comment">   */</span><br>  <span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">unparkSuccessor</span><span class="hljs-params">(Node node)</span> &#123;<br>      <span class="hljs-comment">/*</span><br><span class="hljs-comment">       * If status is negative (i.e., possibly needing signal) try</span><br><span class="hljs-comment">       * to clear in anticipation of signalling.  It is OK if this</span><br><span class="hljs-comment">       * fails or if status is changed by waiting thread.</span><br><span class="hljs-comment">       */</span><br>      <span class="hljs-type">int</span> <span class="hljs-variable">ws</span> <span class="hljs-operator">=</span> node.waitStatus;<br>      <span class="hljs-keyword">if</span> (ws &lt; <span class="hljs-number">0</span>)<br>          compareAndSetWaitStatus(node, ws, <span class="hljs-number">0</span>);<br><br>      <span class="hljs-comment">/*</span><br><span class="hljs-comment">       * Thread to unpark is held in successor, which is normally</span><br><span class="hljs-comment">       * just the next node.  But if cancelled or apparently null,</span><br><span class="hljs-comment">       * traverse backwards from tail to find the actual</span><br><span class="hljs-comment">       * non-cancelled successor.</span><br><span class="hljs-comment">       */</span><br>      <span class="hljs-type">Node</span> <span class="hljs-variable">s</span> <span class="hljs-operator">=</span> node.next;<br>      <span class="hljs-keyword">if</span> (s == <span class="hljs-literal">null</span> || s.waitStatus &gt; <span class="hljs-number">0</span>) &#123;<br>          s = <span class="hljs-literal">null</span>;<br>          <span class="hljs-keyword">for</span> (<span class="hljs-type">Node</span> <span class="hljs-variable">t</span> <span class="hljs-operator">=</span> tail; t != <span class="hljs-literal">null</span> &amp;&amp; t != node; t = t.prev)<br>              <span class="hljs-keyword">if</span> (t.waitStatus &lt;= <span class="hljs-number">0</span>)<br>                  s = t;<br>      &#125;<br>      <span class="hljs-keyword">if</span> (s != <span class="hljs-literal">null</span>)<br>          LockSupport.unpark(s.thread);<br>  &#125;<br></code></pre></td></tr></table></figure>
+
+<p>公平锁：</p>
+<p>相比较非公平，会提前判断当前队列中是否有前置的Node，如果有前置Node则直接进行排队等待，不直接参与抢占锁。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment">         * Fair version of tryAcquire.  Don&#x27;t grant access unless</span><br><span class="hljs-comment">         * recursive call or no waiters or is first.</span><br><span class="hljs-comment">         */</span><br>        <span class="hljs-meta">@ReservedStackAccess</span><br>        <span class="hljs-keyword">protected</span> <span class="hljs-keyword">final</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">tryAcquire</span><span class="hljs-params">(<span class="hljs-type">int</span> acquires)</span> &#123;<br>            <span class="hljs-keyword">final</span> <span class="hljs-type">Thread</span> <span class="hljs-variable">current</span> <span class="hljs-operator">=</span> Thread.currentThread();<br>            <span class="hljs-type">int</span> <span class="hljs-variable">c</span> <span class="hljs-operator">=</span> getState();<br>            <span class="hljs-keyword">if</span> (c == <span class="hljs-number">0</span>) &#123;<br>                <span class="hljs-keyword">if</span> (!hasQueuedPredecessors() &amp;&amp;<br>                    compareAndSetState(<span class="hljs-number">0</span>, acquires)) &#123;<br>                    setExclusiveOwnerThread(current);<br>                    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>                &#125;<br>            &#125;<br>            <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (current == getExclusiveOwnerThread()) &#123;<br>                <span class="hljs-type">int</span> <span class="hljs-variable">nextc</span> <span class="hljs-operator">=</span> c + acquires;<br>                <span class="hljs-keyword">if</span> (nextc &lt; <span class="hljs-number">0</span>)<br>                    <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Error</span>(<span class="hljs-string">&quot;Maximum lock count exceeded&quot;</span>);<br>                setState(nextc);<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;<br>            &#125;<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;<br>        &#125;<br>    &#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="14-ReentrantLock-ReentrantReadWriteLock-StampedLock"><a href="#14-ReentrantLock-ReentrantReadWriteLock-StampedLock" class="headerlink" title="14. ReentrantLock,ReentrantReadWriteLock,StampedLock"></a>14. ReentrantLock,ReentrantReadWriteLock,StampedLock</h2><p>独占锁，读写锁，邮戳锁</p>
+<p><img src="/img/Java-JUC-IMGS/Untitled%2041.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p>ReentrantReadWriteLock extends  <code>ReadWriteLock</code></p>
+<ol>
+<li>读写锁定义：<ol>
+<li>一个资源类能够被多个读线程访问或被一个写线程访问，但不能同时存在读写线程。</li>
+<li>一体两面，读写互斥，读读共享。</li>
+<li></li>
+</ol>
+</li>
+<li>2</li>
+<li>3</li>
+</ol>
+<h3 id="锁演化"><a href="#锁演化" class="headerlink" title="锁演化"></a>锁演化</h3><p><img src="/img/Java-JUC-IMGS/Untitled%2042.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p>无锁→ synchronized、lock(RentrantLock) → ReentrantReadWriteLock  → stampedLock(邮戳锁）</p>
+<p>synchronized, lock接口</p>
+<p>多线程，不管读还是写，每次都只有一个线程获取锁，onlyone</p>
+<ul>
+<li><p>ReentrantReadWriteLock：</p>
+<p>  优点：</p>
+<ol>
+<li>读写互斥，写写互斥。</li>
+<li>读读共享，多线程并行</li>
+<li>读多写少，读写锁Good</li>
+</ol>
+<p>  缺点：</p>
+<ol>
+<li>写锁饥饿问题（读没有完成时，写线程不能获取锁）</li>
+<li>注意，锁降级</li>
+</ol>
+<p>  可重用—锁降级 写锁的降级，降级为读锁 </p>
+<ol>
+<li><p>如果同一个线程持有写锁，在没有释放写锁之前，可以继续获得读锁。这就是写锁的降级，降级为读锁 （可重入锁）</p>
+</li>
+<li><p>惯例规定，先获得写锁然后获得读锁，在释放写锁的 次序。</p>
+</li>
+<li><p>如果释放了写锁，那么就完全转换为读锁。</p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2043.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+</li>
+</ol>
+<p>  <strong>释放写锁前立刻获得写锁，写后读，防止其他线程进行抢占，保证一个完整的锁降级过程。目的是保证数据可见性。</strong></p>
+<p>  <strong>利用锁降级替代释放锁</strong>，防止数据出错。</p>
+<p>  锁升级不可用（读锁升级 到写锁不可行）：线程持有读锁，写锁无法再获得，写线程会进入阻塞，需等待读锁完后写线程才能获得锁。</p>
+<p>  ReentrantReadWriteLock 的读锁是悲观锁，即读的过程中不允许写。  
+  </p>
+</li>
+<li><p>StampedLock（邮戳锁，版本锁）比读写锁更快</p>
+<p>   <strong>读的过程中也允许写锁介入</strong></p>
+<ol>
+<li>是什么？<ol>
+<li>是对ReentrantReadWriteLock优化，缓解（解决）写锁饥饿问题。</li>
+<li>stamp（戳记，标签，时间戳）</li>
+<li>不可重入，危险</li>
+</ol>
+</li>
+<li>解决锁饥饿问题<ol>
+<li>使用公平锁new ReentrantReadWriteLock(true),但会牺牲系统吞吐量。</li>
+<li>StampedLock乐观读锁；获得乐观读锁后，还需要对结果进行校验，读的时候允许其他线程尝试获取写锁不会被阻塞。</li>
+</ol>
+</li>
+<li>3中控制读，写访问模式。<ol>
+<li>写模式，writelock</li>
+<li>读模式（悲观），readlock </li>
+<li>乐观读 optimistic reading:无锁控制，类似数据库中的乐观锁，支持读写并发，很乐观认为读取时没人修改，假如被修改再实现升级为悲观读模式。</li>
+</ol>
+</li>
+<li>缺点：<ol>
+<li>stampedLock不支持可重入，没有Re开头 </li>
+<li>StampedLock的悲观读和写锁都不支持条件变量（Condition）</li>
+<li>使用StampedLock一定不要调用中断操作，即：interrupt()方法。</li>
+</ol>
+<h2 id="JUC总结-回顾"><a href="#JUC总结-回顾" class="headerlink" title="JUC总结-回顾"></a>JUC总结-回顾</h2><p> <img src="/img/Java-JUC-IMGS/Untitled%2044.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2045.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<ol>
+<li>锁</li>
+</ol>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2046.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<ol>
+<li><p>JMM Java内存定义规范。</p>
+</li>
+<li><p>synchronized</p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2047.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2048.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+</li>
+</ol>
+<p> CAS</p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2049.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p> volatile</p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2050.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p> LockSupport</p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2051.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p> AQS</p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2052.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2053.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p> ThreadLocal</p>
+<p> <img src="/img/Java-JUC-IMGS/Untitled%2054.png" srcset="/img/loading.gif" lazyload alt="Untitled"></p>
+<p> 原子增强类Atomic</p>
+</li>
+</ol>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Java/" class="category-chain-item">Java</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Java/" class="print-no-link">#Java</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Java_JUC</div>
+      <div>https://e-miao.github.io/java/java-juc复习/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>e-miao</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年10月26日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/hadoop/%202022-11-08-Hadoop3-x-HA%E8%AE%BE%E7%BD%AE/" title="Hadoop3.x-HA设置">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Hadoop3.x-HA设置</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/linux/Ubuntu22%E8%AE%BE%E7%BD%AE%E9%9D%99%E6%80%81IP/" title="Ubuntu22设置静态IP">
+                        <span class="hidden-mobile">Ubuntu22设置静态IP</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"e-miao/blog-comments","repo-id":"R_kgDOJKc4zQ","category":"Announcements","category-id":"DIC_kwDOJKc4zc4CU61N","theme-light":"light","theme-dark":"dark","mapping":"og:title","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

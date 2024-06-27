@@ -1,0 +1,711 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/lxz_head.png">
+  <link rel="icon" href="/img/lxz_head.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="e-miao">
+  <meta name="keywords" content="Flink ElasticSearch add field data">
+  
+    <meta name="description" content="flink sink to elasticsearch add field data">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flink-Sink-ElasticSearch部分字段追加数据">
+<meta property="og:url" content="https://e-miao.github.io/flink/2021-08-13-Flink-Sink-ElasticSearch%E9%83%A8%E5%88%86%E5%AD%97%E6%AE%B5%E8%BF%BD%E5%8A%A0%E6%95%B0%E6%8D%AE/index.html">
+<meta property="og:site_name" content="e-miao">
+<meta property="og:description" content="flink sink to elasticsearch add field data">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://e-miao.github.io/img/logo/flink.png">
+<meta property="article:published_time" content="2021-08-13T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-08-13T00:00:00.000Z">
+<meta property="article:author" content="e-miao">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://e-miao.github.io/img/logo/flink.png">
+  
+  
+  
+  <title>Flink-Sink-ElasticSearch部分字段追加数据 - e-miao</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"e-miao.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="e-miao" type="application/atom+xml">
+</head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>e-miao</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/friends/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Flink-Sink-ElasticSearch部分字段追加数据"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-08-13 00:00" pubdate>
+          2021年8月13日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          10 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Flink-Sink-ElasticSearch部分字段追加数据</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Flink-Flink-Sink-ElasticSearch部分字段追加数据"><a href="#Flink-Flink-Sink-ElasticSearch部分字段追加数据" class="headerlink" title="Flink Flink-Sink-ElasticSearch部分字段追加数据"></a>Flink Flink-Sink-ElasticSearch部分字段追加数据</h1><h2 id="背景需求"><a href="#背景需求" class="headerlink" title="背景需求"></a>背景需求</h2><p>因flink消费kafka，其中数据需要进行补维操作，正常补维的数据都保存了最新属性数据到mysql。当任务正常流通时，从mysql拿取属性数据进行维度补充没有问题。<br>现有需求：当数据重放时：需要拿到对应时间状态的维度数据。</p>
+<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><h3 id="方案一："><a href="#方案一：" class="headerlink" title="方案一："></a>方案一：</h3><p>flink 双流join 关联用户ID，或其他关键值进行双流join完成。<br><a target="_blank" rel="noopener" href="https://ci.apache.org/projects/flink/flink-docs-master/docs/dev/datastream/operators/joining/#interval-join">https://ci.apache.org/projects/flink/flink-docs-master/docs/dev/datastream/operators/joining/#interval-join</a></p>
+<p>方案一缺点：</p>
+<ol>
+<li>存在重放数据中没有属性数据时，关联不上的问题。当然这个也可以依赖外部储存解决</li>
+<li>增加程序的关联复杂度。</li>
+</ol>
+<p>优点：</p>
+<ol>
+<li>利用flink join机制 ，降低对外部存储系统依赖</li>
+<li>高效。可以解决大部分的关联数据，但是有部分可能还是关联不上。</li>
+</ol>
+<h3 id="方案二"><a href="#方案二" class="headerlink" title="方案二:"></a>方案二:</h3><p>通过保存历史版本数据，当回放数据时，判断当前数据与最新本的版本号是否一致。<br>不一致时，使用相对应的版本的属性数据。<br>优点：</p>
+<ol>
+<li>不存在数据丢失。</li>
+<li>相对程序来说简单一点</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>严重依赖外部存储。特别是数据量巨大的情况。</li>
+</ol>
+<h2 id="最终选择"><a href="#最终选择" class="headerlink" title="最终选择"></a>最终选择</h2><p>综合考虑下来，选择了方案二<br>因公司相关程序都是跑在云（Flink on Yarn-EMR)上，没有自己的分布式存储系统。<br>本来想使用HBase,但是hbase强依赖hdfs，公司没有自建的HDFS集群，放弃。<br>选择使用ES。</p>
+<p>说了这么多，好像都跟ES没有啥关系。。。。</p>
+<p>选择ES来存储属性维度版本数据。<br>版本号就是属性数据中的timestamp字段（时间戳字段）<br>分别两个索性<br>1：存储版本的索性  user_versions<br>2：存储对应版本的数据索引 user_property_index </p>
+<p>其中索引user_versions专门用来存储用户数据的版本信息<br>eg:<br>user_versions<br>id&#x3D;pid_uid<br>source&#x3D;timestamps:[1628823667951]</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>       <span class="hljs-attr">&quot;_index&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;user_versions&quot;</span><span class="hljs-punctuation">,</span><br>       <span class="hljs-attr">&quot;_type&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;_doc&quot;</span><span class="hljs-punctuation">,</span><br>       <span class="hljs-attr">&quot;_id&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;1_100007140&quot;</span><span class="hljs-punctuation">,</span><br>       <span class="hljs-attr">&quot;_score&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-number">1.0</span><span class="hljs-punctuation">,</span><br>       <span class="hljs-attr">&quot;_source&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>         <span class="hljs-attr">&quot;timestamps&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>           <span class="hljs-number">1628823667951</span><span class="hljs-punctuation">,</span><br>           <span class="hljs-number">1628823667952</span><span class="hljs-punctuation">,</span><br>           <span class="hljs-number">1628823668001</span><span class="hljs-punctuation">,</span><br>           <span class="hljs-number">1628823855026</span><span class="hljs-punctuation">,</span><br>           <span class="hljs-number">1628823856738</span><span class="hljs-punctuation">,</span><br>           <span class="hljs-number">1628823873136</span><span class="hljs-punctuation">,</span><br>           <span class="hljs-number">1628823958514</span><span class="hljs-punctuation">,</span><br>           <span class="hljs-number">1628824061838</span><br>         <span class="hljs-punctuation">]</span><br>       <span class="hljs-punctuation">&#125;</span><br>     <span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+<p>user_property_index<br>id&#x3D;pid_uid_timestamp<br>eg:其余字段省略了。只列出关键数据</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">GET user_property_index/_doc/1_100007140_1628824061838<br></code></pre></td></tr></table></figure>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;_index&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;user_property_index&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;_type&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;_doc&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;_id&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;1_100007140_1628824061838&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;_version&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;_seq_no&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-number">3360</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;_primary_term&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;found&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-keyword">true</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;_source&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;data&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;&quot;</span><span class="hljs-string">&quot;&#123;</span><br><span class="hljs-string">        &quot;</span>pid<span class="hljs-string">&quot;: &quot;</span><span class="hljs-number">1</span><span class="hljs-string">&quot;,</span><br><span class="hljs-string">        &quot;</span>uid<span class="hljs-string">&quot;: &quot;</span><span class="hljs-number">100007140</span><span class="hljs-string">&quot;,</span><br><span class="hljs-string">        &quot;</span>timestamp<span class="hljs-string">&quot;: &quot;</span><span class="hljs-number">1628824061838</span><span class="hljs-string">&quot;,</span><br><span class="hljs-string">        &quot;</span>md5<span class="hljs-string">&quot;: &quot;</span>f83874b7742c78bd916cc430c44df527<span class="hljs-string">&quot;</span><br><span class="hljs-string">    &#125;&quot;</span><span class="hljs-string">&quot;&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;update_at&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-number">1628841996</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;id&quot;</span> <span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;1_100007140&quot;</span><br>  <span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+
+<p>当存储用户信息时，选择数据追加方式，<br>ES中有关于数据追加方式的介绍<br><a target="_blank" rel="noopener" href="https://www.huaweicloud.com/articles/da7557ae10f7f6153d23b000ec2d4015.html">华为云文档</a><br>简陋的<a target="_blank" rel="noopener" href="https://www.elastic.co/guide/cn/elasticsearch/php/current/_updating_documents.html">官网文档</a>（应该是我找的方式不对）</p>
+<p>在flink中使用</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> ElasticsearchSink&lt;JSONObject&gt; <span class="hljs-title function_">genESSink</span><span class="hljs-params">(List&lt;HttpHost&gt; httpHosts)</span> &#123;<br>        ElasticsearchSink.<span class="hljs-type">Builder</span> <span class="hljs-variable">esBuilder</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">ElasticsearchSink</span>.Builder(httpHosts, <span class="hljs-keyword">new</span> <span class="hljs-title class_">ElasticsearchSinkFunction</span>&lt;JSONObject&gt;() &#123;<br><br>            <span class="hljs-keyword">public</span> UpdateRequest <span class="hljs-title function_">createUserPropertySnapshotRequest</span><span class="hljs-params">(JSONObject element)</span> &#123;<br>                <span class="hljs-type">String</span> <span class="hljs-variable">pid</span> <span class="hljs-operator">=</span> element.getString(<span class="hljs-string">&quot;pid&quot;</span>);<br>                <span class="hljs-type">String</span> <span class="hljs-variable">uid</span> <span class="hljs-operator">=</span> element.getString(<span class="hljs-string">&quot;uid&quot;</span>);<br>                <span class="hljs-type">Long</span> <span class="hljs-variable">timestamp</span> <span class="hljs-operator">=</span> element.getLong(<span class="hljs-string">&quot;timestamp&quot;</span>);<br><br>                <span class="hljs-comment">//保存property 信息</span><br>                <span class="hljs-type">String</span> <span class="hljs-variable">propertyId</span> <span class="hljs-operator">=</span> pid + <span class="hljs-string">&quot;_&quot;</span> + uid + <span class="hljs-string">&quot;_&quot;</span> + timestamp;<br>                <span class="hljs-type">UpdateRequest</span> <span class="hljs-variable">updateReq</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">UpdateRequest</span>(ESClient.userPropertyIndex, propertyId);<br>                Map&lt;String, Object&gt; sourceMap = <span class="hljs-keyword">new</span> <span class="hljs-title class_">HashMap</span>&lt;&gt;();<br>                sourceMap.put(<span class="hljs-string">&quot;id&quot;</span>, pid + <span class="hljs-string">&quot;_&quot;</span> + uid);<br>                sourceMap.put(<span class="hljs-string">&quot;data&quot;</span>, element.toJSONString());<br>                sourceMap.put(<span class="hljs-string">&quot;update_at&quot;</span>, System.currentTimeMillis() / <span class="hljs-number">1000</span>);<br><br>                <span class="hljs-type">IndexRequest</span> <span class="hljs-variable">indexReq</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">IndexRequest</span>(ESClient.userPropertyIndex);<br>                indexReq.id(propertyId);<br>                indexReq.source(sourceMap);<br>                indexReq.timeout(TimeValue.timeValueSeconds(<span class="hljs-number">60</span>));<br><br>                updateReq.doc(sourceMap)<br>                        .upsert(indexReq)<br>                        .timeout(TimeValue.timeValueSeconds(<span class="hljs-number">60</span>));<br>                <span class="hljs-keyword">return</span> updateReq;<br>            &#125;<br><br>            <span class="hljs-meta">@Override</span><br>            <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">process</span><span class="hljs-params">(JSONObject element, RuntimeContext ctx, RequestIndexer indexer)</span> &#123;<br>                indexer.add(<br>                        createUserPropertySnapshotRequest(element),<br>                        createPropertyVersionRequest(element));<br>            &#125;<br><br>            <span class="hljs-keyword">private</span> UpdateRequest <span class="hljs-title function_">createPropertyVersionRequest</span><span class="hljs-params">(JSONObject element)</span> &#123;<br>                <span class="hljs-type">String</span> <span class="hljs-variable">pid</span> <span class="hljs-operator">=</span> element.getString(<span class="hljs-string">&quot;pid&quot;</span>);<br>                <span class="hljs-type">String</span> <span class="hljs-variable">uid</span> <span class="hljs-operator">=</span> element.getString(<span class="hljs-string">&quot;uid&quot;</span>);<br>                <span class="hljs-type">Long</span> <span class="hljs-variable">timestamp</span> <span class="hljs-operator">=</span> element.getLong(<span class="hljs-string">&quot;timestamp&quot;</span>);<br><br>                <span class="hljs-type">String</span> <span class="hljs-variable">versionId</span> <span class="hljs-operator">=</span> pid + <span class="hljs-string">&quot;_&quot;</span> + uid;<br>                <span class="hljs-comment">//保存版本信息</span><br>                <span class="hljs-type">UpdateRequest</span> <span class="hljs-variable">updateReq</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">UpdateRequest</span>(ESClient.versionIndex, versionId);<br>                Map&lt;String, Object&gt; params = <span class="hljs-keyword">new</span> <span class="hljs-title class_">HashMap</span>&lt;&gt;();<br>                params.put(<span class="hljs-string">&quot;new_timestamp&quot;</span>, timestamp);<br>                <span class="hljs-type">String</span> <span class="hljs-variable">idOrCode</span> <span class="hljs-operator">=</span> <span class="hljs-string">&quot;ctx._source.timestamps.add(params.new_timestamp)&quot;</span>;<br>                <span class="hljs-type">Script</span> <span class="hljs-variable">script</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Script</span>(ScriptType.INLINE, Script.DEFAULT_SCRIPT_LANG, idOrCode, params);<br>                updateReq.script(script);<br><br>                Map&lt;String, Object&gt; sourceMap = <span class="hljs-keyword">new</span> <span class="hljs-title class_">HashMap</span>&lt;&gt;();<br>                sourceMap.put(<span class="hljs-string">&quot;timestamps&quot;</span>, <span class="hljs-keyword">new</span> <span class="hljs-title class_">Long</span>[]&#123;timestamp&#125;);<br>                <span class="hljs-type">IndexRequest</span> <span class="hljs-variable">indexReq</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">IndexRequest</span>(ESClient.versionIndex);<br>                indexReq.id(versionId);<br>                indexReq.source(sourceMap);<br>                indexReq.timeout(TimeValue.timeValueSeconds(<span class="hljs-number">60</span>));<br>                updateReq.upsert(indexReq)<br>                        .timeout(TimeValue.timeValueSeconds(<span class="hljs-number">60</span>));<br><br>                <span class="hljs-keyword">return</span> updateReq;<br>            &#125;<br>        &#125;);<br><br>        esBuilder.setBulkFlushMaxActions(<span class="hljs-number">3</span>);<br>      <br>        <span class="hljs-keyword">return</span> esBuilder.build();<br>    &#125;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * 获取离时间参数版本最近的一个版本</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> pid              product_id</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> uid              userId</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> versionTimestamp 时间参数版本号</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@return</span> user_property dataJson</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> String <span class="hljs-title function_">getUserVersionProperty</span><span class="hljs-params">(String pid, String uid, Long versionTimestamp)</span> &#123;<br>        <span class="hljs-type">String</span> <span class="hljs-variable">versionId</span> <span class="hljs-operator">=</span> pid + <span class="hljs-string">&quot;_&quot;</span> + uid;<br>        <span class="hljs-keyword">try</span> (<span class="hljs-type">RestHighLevelClient</span> <span class="hljs-variable">client</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">RestHighLevelClient</span>(clientBuilder)) &#123;<br>            <span class="hljs-comment">//获取最近版本</span><br>            <span class="hljs-type">GetRequest</span> <span class="hljs-variable">getRequest</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">GetRequest</span>(versionIndex, versionId);<br>            <span class="hljs-type">GetResponse</span> <span class="hljs-variable">resp</span> <span class="hljs-operator">=</span> client.get(getRequest, RequestOptions.DEFAULT);<br>            <span class="hljs-keyword">if</span> (resp.isExists()) &#123;<br>                <span class="hljs-type">Object</span> <span class="hljs-variable">timestamps</span> <span class="hljs-operator">=</span> resp.getSource().get(<span class="hljs-string">&quot;timestamps&quot;</span>);<br>                ArrayList&lt;Long&gt; versionList = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ArrayList</span>&lt;&gt;();<br>                <span class="hljs-keyword">if</span> (timestamps != <span class="hljs-literal">null</span> &amp;&amp; timestamps <span class="hljs-keyword">instanceof</span> ArrayList) &#123;<br>                    versionList = (ArrayList&lt;Long&gt;) timestamps;<br>                &#125;<br>                <span class="hljs-type">long</span> <span class="hljs-variable">sub</span> <span class="hljs-operator">=</span> versionTimestamp;<br>                <span class="hljs-type">long</span> <span class="hljs-variable">resVersion</span> <span class="hljs-operator">=</span> -<span class="hljs-number">1L</span>;<br>                HashSet&lt;Long&gt; versionSet = <span class="hljs-keyword">new</span> <span class="hljs-title class_">HashSet</span>&lt;&gt;();<br>                versionSet.addAll(versionList);<br>                <span class="hljs-keyword">for</span> (Long version : versionSet) &#123;<br>                    <span class="hljs-type">long</span> <span class="hljs-variable">tempSub</span> <span class="hljs-operator">=</span> versionTimestamp - version;<span class="hljs-comment">//</span><br>                    <span class="hljs-keyword">if</span> (tempSub &gt;= <span class="hljs-number">0</span> &amp;&amp; tempSub &lt; sub) &#123;<span class="hljs-comment">//找到差值最小前一个版本</span><br>                        sub = tempSub;<br>                        resVersion = version;<br>                    &#125;<br>                &#125;<br>                <span class="hljs-keyword">if</span> (resVersion != -<span class="hljs-number">1L</span>) &#123;<br>                    <span class="hljs-type">GetRequest</span> <span class="hljs-variable">proGet</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">GetRequest</span>(userPropertyIndex, pid + <span class="hljs-string">&quot;_&quot;</span> + uid + <span class="hljs-string">&quot;_&quot;</span> + resVersion);<br>                    resp = client.get(proGet, RequestOptions.DEFAULT);<br>                    <span class="hljs-keyword">if</span> (resp.isExists()) &#123;<br>                        Map&lt;String, Object&gt; source = resp.getSource();<br>                        <span class="hljs-keyword">if</span> (source != <span class="hljs-literal">null</span> &amp;&amp; !source.isEmpty()) &#123;<br>                            <span class="hljs-keyword">return</span> source.get(<span class="hljs-string">&quot;data&quot;</span>) == <span class="hljs-literal">null</span> ? <span class="hljs-literal">null</span> : source.get(<span class="hljs-string">&quot;data&quot;</span>).toString();<br>                        &#125; <span class="hljs-keyword">else</span> &#123;<br>                            <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;<br>                        &#125;<br>                    &#125;<br>                &#125;<br>            &#125;<br>        &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;<br>            log.error(<span class="hljs-string">&quot;getUserVersionProperty exception : &quot;</span>, e.getMessage(), e);<br>        &#125;<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;<br>    &#125;<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flink/" class="category-chain-item">Flink</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/Flink/ElasticSearch/" class="category-chain-item">ElasticSearch</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Flink-Sink-ElasticSearch部分字段追加数据</div>
+      <div>https://e-miao.github.io/flink/2021-08-13-Flink-Sink-ElasticSearch部分字段追加数据/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>e-miao</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年8月13日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/python/2021-09-08-Python%E7%BC%96%E8%AF%91%E6%89%93%E5%8C%85%E4%B8%BA%E5%B9%B6%E7%94%9F%E6%88%90deb(%E5%B8%A6%E6%A1%8C%E9%9D%A2%E5%9B%BE%E6%A0%87)/" title="Python编译打包为并生成deb(带桌面图标)">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Python编译打包为并生成deb(带桌面图标)</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/kafka/2021-08-02-%E8%AE%B0%E4%B8%80%E6%AC%A1Kafka-Manager-JMX%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86/" title="记一次Kafka-Manager JMX异常处理">
+                        <span class="hidden-mobile">记一次Kafka-Manager JMX异常处理</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"e-miao/blog-comments","repo-id":"R_kgDOJKc4zQ","category":"Announcements","category-id":"DIC_kwDOJKc4zc4CU61N","theme-light":"light","theme-dark":"dark","mapping":"og:title","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

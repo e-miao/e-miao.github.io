@@ -1,0 +1,755 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/lxz_head.png">
+  <link rel="icon" href="/img/lxz_head.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="e-miao">
+  <meta name="keywords" content="flink-cdc mysql hudi">
+  
+    <meta name="description" content="使用flink-cdc 同步 mysql数据到hudi数据湖中.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mysql-Flink-Hudi数据同步">
+<meta property="og:url" content="https://e-miao.github.io/flink/Mysql-Flink-Hudi%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5/index.html">
+<meta property="og:site_name" content="e-miao">
+<meta property="og:description" content="使用flink-cdc 同步 mysql数据到hudi数据湖中.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://e-miao.github.io/img/logo/flink.png">
+<meta property="article:published_time" content="2023-05-08T15:31:58.000Z">
+<meta property="article:modified_time" content="2023-05-08T15:31:58.000Z">
+<meta property="article:author" content="e-miao">
+<meta property="article:tag" content="Flink">
+<meta property="article:tag" content="Hudi">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://e-miao.github.io/img/logo/flink.png">
+  
+  
+  
+  <title>Mysql-Flink-Hudi数据同步 - e-miao</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"e-miao.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="e-miao" type="application/atom+xml">
+</head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>e-miao</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/friends/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Mysql-Flink-Hudi数据同步"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-05-08 15:31" pubdate>
+          2023年5月8日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          14 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Mysql-Flink-Hudi数据同步</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Mysql-Flink-Hudi数据同步"><a href="#Mysql-Flink-Hudi数据同步" class="headerlink" title="Mysql-Flink-Hudi数据同步"></a>Mysql-Flink-Hudi数据同步</h1><p>使用Flink-Cdc同步mysql数据到Hudi中.使用Kafka作为中间缓存组件.</p>
+<h1 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h1><ol>
+<li><p>开启MySQL-binglog日志</p>
+</li>
+<li><p>编译好相关hudi版本,本次使用Hudi:0.12.3</p>
+</li>
+<li><p>其他软件版本:</p>
+<p> flink:1.15.4</p>
+<p> Java:1.8</p>
+<p> hadoop: 3.3.0</p>
+</li>
+</ol>
+<h1 id="同步数据操作"><a href="#同步数据操作" class="headerlink" title="同步数据操作"></a>同步数据操作</h1><h2 id="1-启动Flink-Yarn-Session"><a href="#1-启动Flink-Yarn-Session" class="headerlink" title="1.启动Flink-Yarn-Session"></a>1.启动Flink-Yarn-Session</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">./bin/yarn-session -d<br></code></pre></td></tr></table></figure>
+
+<h2 id="2-启动Flink-Sq客户端"><a href="#2-启动Flink-Sq客户端" class="headerlink" title="2.启动Flink-Sq客户端."></a>2.启动Flink-Sq客户端.</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">./bin/sql-client.sh embedded -s yarn-session<br></code></pre></td></tr></table></figure>
+
+<h2 id="3-创建cdc-mysql连接器"><a href="#3-创建cdc-mysql连接器" class="headerlink" title="3.创建cdc-mysql连接器."></a>3.创建cdc-mysql连接器.</h2><p>在flink-sql中创建.</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">create</span> <span class="hljs-keyword">table</span> stu3_binlog(<br>  id <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  name string,<br>  school string,<br>  nickname string,<br>  age <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  class_num <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  phone <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  email string,<br>  ip string,<br>  <span class="hljs-keyword">primary</span> key (id) <span class="hljs-keyword">not</span> enforced<br>) <span class="hljs-keyword">with</span> (<br>  <span class="hljs-string">&#x27;connector&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;mysql-cdc&#x27;</span>,<br>  <span class="hljs-string">&#x27;hostname&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;hd000&#x27;</span>,<br>  <span class="hljs-string">&#x27;port&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;3306&#x27;</span>,<br>  <span class="hljs-string">&#x27;username&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;root&#x27;</span>,<br>  <span class="hljs-string">&#x27;password&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;root&#x27;</span>,<br>  <span class="hljs-string">&#x27;database-name&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;test&#x27;</span>,<br>  <span class="hljs-string">&#x27;table-name&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;stu3&#x27;</span><br>);<br><br><span class="hljs-keyword">set</span> <span class="hljs-keyword">sql</span><span class="hljs-operator">-</span>client.execution.result<span class="hljs-operator">-</span>mode<span class="hljs-operator">=</span>tableau; <br></code></pre></td></tr></table></figure>
+<h2 id="4-创建Kafka表"><a href="#4-创建Kafka表" class="headerlink" title="4.创建Kafka表"></a>4.创建Kafka表</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">create</span> <span class="hljs-keyword">table</span> stu3_binlog_sink_kafka(<br>  id <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  name string,<br>  school string,<br>  nickname string,<br>  age <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  class_num <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  phone <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  email string,<br>  ip string,<br>  <span class="hljs-keyword">primary</span> key (id) <span class="hljs-keyword">not</span> enforced<br>) <span class="hljs-keyword">with</span> (<br>  <span class="hljs-string">&#x27;connector&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;upsert-kafka&#x27;</span><br>  ,<span class="hljs-string">&#x27;topic&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;cdc_mysql_stu3_sink&#x27;</span><br>  ,<span class="hljs-string">&#x27;properties.zookeeper.connect&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;hd001:2181,hd002:2181,hd003:2181&#x27;</span><br>  ,<span class="hljs-string">&#x27;properties.bootstrap.servers&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;hd001:9092,hd003:9092,hd002:9092&#x27;</span><br>  ,<span class="hljs-string">&#x27;key.format&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;json&#x27;</span><br>  ,<span class="hljs-string">&#x27;value.format&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;json&#x27;</span><br>);<br></code></pre></td></tr></table></figure>
+<h2 id="5-将mysql-binlog日志写入kafka"><a href="#5-将mysql-binlog日志写入kafka" class="headerlink" title="5.将mysql binlog日志写入kafka"></a>5.将mysql binlog日志写入kafka</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">insert</span> <span class="hljs-keyword">into</span> stu3_binlog_sink_kafka<br><span class="hljs-keyword">select</span> <span class="hljs-operator">*</span> <span class="hljs-keyword">from</span> stu3_binlog;<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="6-创建kafka源表"><a href="#6-创建kafka源表" class="headerlink" title="6.创建kafka源表"></a>6.创建kafka源表</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">create</span> <span class="hljs-keyword">table</span> stu3_binlog_source_kafka(<br>  id <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  name string,<br>  school string,<br>  nickname string,<br>  age <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  class_num <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  phone <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  email string,<br>  ip string<br> ) <span class="hljs-keyword">with</span> (<br>  <span class="hljs-string">&#x27;connector&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;kafka&#x27;</span>,<br>  <span class="hljs-string">&#x27;topic&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;cdc_mysql_stu3_sink&#x27;</span>,<br>  <span class="hljs-string">&#x27;properties.bootstrap.servers&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;hd001:9092,hd003:9092,hd002:9092&#x27;</span>,<br>  <span class="hljs-string">&#x27;format&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;json&#x27;</span>,<br>  <span class="hljs-string">&#x27;scan.startup.mode&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;earliest-offset&#x27;</span>,<br>  <span class="hljs-string">&#x27;properties.group.id&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;testGroup&#x27;</span><br>  );<br></code></pre></td></tr></table></figure>
+
+<h2 id="7-创建hudi目标表"><a href="#7-创建hudi目标表" class="headerlink" title="7.创建hudi目标表"></a>7.创建hudi目标表</h2>  <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs sql"> <span class="hljs-keyword">create</span> <span class="hljs-keyword">table</span> stu3_binlog_sink_hudi(<br>  id <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  name string,<br>  `school` string,<br>  nickname string,<br>  age <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  class_num <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  phone <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  email string,<br>  ip string,<br>  <span class="hljs-keyword">primary</span> key (id) <span class="hljs-keyword">not</span> enforced<br>)<br> partitioned <span class="hljs-keyword">by</span> (`school`)<br> <span class="hljs-keyword">with</span> (<br>  <span class="hljs-string">&#x27;connector&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;hudi&#x27;</span>,<br>  <span class="hljs-string">&#x27;path&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;hdfs:///tmp/hudi_flink/stu3_binlog_sink_hudi&#x27;</span>,<br>  <span class="hljs-string">&#x27;table.type&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;MERGE_ON_READ&#x27;</span>,<br>  <span class="hljs-string">&#x27;write.option&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;insert&#x27;</span>,<br>  <span class="hljs-string">&#x27;write.precombine.field&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;school&#x27;</span><br>  );<br></code></pre></td></tr></table></figure>
+
+<h2 id="8-将kafka数据写入到hudi中"><a href="#8-将kafka数据写入到hudi中" class="headerlink" title="8.将kafka数据写入到hudi中"></a>8.将kafka数据写入到hudi中</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-keyword">insert</span> <span class="hljs-keyword">into</span> stu3_binlog_sink_hudi<br><span class="hljs-keyword">select</span> <span class="hljs-operator">*</span> <span class="hljs-keyword">from</span>  stu3_binlog_source_kafka;<br></code></pre></td></tr></table></figure>
+
+<h1 id="使用sql文件形式进行同步"><a href="#使用sql文件形式进行同步" class="headerlink" title="使用sql文件形式进行同步"></a>使用sql文件形式进行同步</h1><h2 id="定义flink-sql文件"><a href="#定义flink-sql文件" class="headerlink" title="定义flink_sql文件"></a>定义flink_sql文件</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br></pre></td><td class="code"><pre><code class="hljs sql"><br><span class="hljs-keyword">create</span> <span class="hljs-keyword">table</span> stu3_binlog(<br>  id <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  name string,<br>  school string,<br>  nickname string,<br>  age <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  class_num <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  phone <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  email string,<br>  ip string,<br>  <span class="hljs-keyword">primary</span> key (id) <span class="hljs-keyword">not</span> enforced<br>) <span class="hljs-keyword">with</span> (<br>  <span class="hljs-string">&#x27;connector&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;mysql-cdc&#x27;</span>,<br>  <span class="hljs-string">&#x27;hostname&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;hd000&#x27;</span>,<br>  <span class="hljs-string">&#x27;port&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;3306&#x27;</span>,<br>  <span class="hljs-string">&#x27;username&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;root&#x27;</span>,<br>  <span class="hljs-string">&#x27;password&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;root&#x27;</span>,<br>  <span class="hljs-string">&#x27;database-name&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;test&#x27;</span>,<br>  <span class="hljs-string">&#x27;table-name&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;stu3&#x27;</span><br>);<br><br><br><span class="hljs-keyword">create</span> <span class="hljs-keyword">table</span> stu3_binlog_sink_kafka(<br>  id <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  name string,<br>  school string,<br>  nickname string,<br>  age <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  class_num <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  phone <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  email string,<br>  ip string,<br>  <span class="hljs-keyword">primary</span> key (id) <span class="hljs-keyword">not</span> enforced<br>) <span class="hljs-keyword">with</span> (<br>  <span class="hljs-string">&#x27;connector&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;upsert-kafka&#x27;</span><br>  ,<span class="hljs-string">&#x27;topic&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;cdc_mysql_stu3_sink&#x27;</span><br>  ,<span class="hljs-string">&#x27;properties.zookeeper.connect&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;hd001:2181,hd002:2181,hd003:2181&#x27;</span><br>  ,<span class="hljs-string">&#x27;properties.bootstrap.servers&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;hd001:9092,hd003:9092,hd002:9092&#x27;</span><br>  ,<span class="hljs-string">&#x27;key.format&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;json&#x27;</span><br>  ,<span class="hljs-string">&#x27;value.format&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;json&#x27;</span><br>);<br><br><span class="hljs-keyword">insert</span> <span class="hljs-keyword">into</span> stu3_binlog_sink_kafka<br><span class="hljs-keyword">select</span> <span class="hljs-operator">*</span> <span class="hljs-keyword">from</span> stu3_binlog;<br><br><br><span class="hljs-keyword">create</span> <span class="hljs-keyword">table</span> stu3_binlog_source_kafka(<br>  id <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  name string,<br>  school string,<br>  nickname string,<br>  age <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  class_num <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  phone <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  email string,<br>  ip string<br> ) <span class="hljs-keyword">with</span> (<br>  <span class="hljs-string">&#x27;connector&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;kafka&#x27;</span>,<br>  <span class="hljs-string">&#x27;topic&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;cdc_mysql_stu3_sink&#x27;</span>,<br>  <span class="hljs-string">&#x27;properties.bootstrap.servers&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;hd001:9092,hd003:9092,hd002:9092&#x27;</span>,<br>  <span class="hljs-string">&#x27;format&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;json&#x27;</span>,<br>  <span class="hljs-string">&#x27;scan.startup.mode&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;earliest-offset&#x27;</span>,<br>  <span class="hljs-string">&#x27;properties.group.id&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;testGroup&#x27;</span><br>  );<br><br><br> <span class="hljs-keyword">create</span> <span class="hljs-keyword">table</span> stu3_binlog_sink_hudi(<br>  id <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  name string,<br>  `school` string,<br>  nickname string,<br>  age <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  class_num <span class="hljs-type">int</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  phone <span class="hljs-type">bigint</span> <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span>,<br>  email string,<br>  ip string,<br>  <span class="hljs-keyword">primary</span> key (id) <span class="hljs-keyword">not</span> enforced<br>)<br> partitioned <span class="hljs-keyword">by</span> (`school`)<br> <span class="hljs-keyword">with</span> (<br>  <span class="hljs-string">&#x27;connector&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;hudi&#x27;</span>,<br>  <span class="hljs-string">&#x27;path&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;hdfs:///tmp/hudi_flink/stu3_binlog_sink_hudi&#x27;</span>,<br>  <span class="hljs-string">&#x27;table.type&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;MERGE_ON_READ&#x27;</span>,<br>  <span class="hljs-string">&#x27;write.option&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;insert&#x27;</span>,<br>  <span class="hljs-string">&#x27;write.precombine.field&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;school&#x27;</span>,<br>  <span class="hljs-string">&#x27;read.streaming.enabled&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;true&#x27;</span>,<br>  <span class="hljs-string">&#x27;read.streaming.check-interval&#x27;</span> <span class="hljs-operator">=</span> <span class="hljs-string">&#x27;10&#x27;</span><br>  );<br><br><br><span class="hljs-keyword">insert</span> <span class="hljs-keyword">into</span> stu3_binlog_sink_hudi<br><span class="hljs-keyword">select</span> <span class="hljs-operator">*</span> <span class="hljs-keyword">from</span>  stu3_binlog_source_kafka;<br></code></pre></td></tr></table></figure>
+<h2 id="执行sql文件"><a href="#执行sql文件" class="headerlink" title="执行sql文件"></a>执行sql文件</h2><p>前提需启动yarn-session</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">./bin/sql-client.sh embedded -s yarn-session -f sqls/xxxx.sql<br></code></pre></td></tr></table></figure>
+
+
+<h2 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h2><ul>
+<li>flink-conf.yml配置</li>
+</ul>
+<p>开启flink-cps, 并设置有效一次消费.</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs yml"><span class="hljs-comment"># execution.checkpointing.interval: 3min</span><br><span class="hljs-attr">execution.checkpointing.interval:</span> <span class="hljs-string">10000ms</span><br><span class="hljs-comment"># execution.checkpointing.externalized-checkpoint-retention: [DELETE_ON_CANCELLATION, RETAIN_ON_CANCELLATION]</span><br><span class="hljs-comment"># execution.checkpointing.max-concurrent-checkpoints: 1</span><br><span class="hljs-attr">execution.checkpointing.max-concurrent-checkpoints:</span> <span class="hljs-number">1</span><br><span class="hljs-comment"># execution.checkpointing.min-pause: 0</span><br><span class="hljs-comment"># execution.checkpointing.mode: [EXACTLY_ONCE, AT_LEAST_ONCE]</span><br><span class="hljs-attr">execution.checkpointing.mode:</span> <span class="hljs-string">EXACTLY_ONCE</span><br><span class="hljs-comment"># execution.checkpointing.timeout: 10min</span><br><span class="hljs-comment"># execution.checkpointing.tolerable-failed-checkpoints: 0</span><br><span class="hljs-comment"># execution.checkpointing.unaligned: false</span><br><span class="hljs-comment">#</span><br><span class="hljs-comment"># Supported backends are &#x27;hashmap&#x27;, &#x27;rocksdb&#x27;, or the</span><br><span class="hljs-comment"># &lt;class-name-of-factory&gt;.</span><br><span class="hljs-comment">#</span><br><span class="hljs-comment"># state.backend: hashmap</span><br><span class="hljs-attr">state.backend:</span> <span class="hljs-string">rocksdb</span><br><br><span class="hljs-comment"># Directory for checkpoints filesystem, when using any of the default bundled</span><br><span class="hljs-comment"># state backends.</span><br><span class="hljs-comment">#</span><br><span class="hljs-comment"># state.checkpoints.dir: hdfs://namenode-host:port/flink-checkpoints</span><br><span class="hljs-attr">state.checkpoints.dir:</span> <span class="hljs-string">hdfs:///flink/checkpoints</span><br><br><span class="hljs-comment"># Default target directory for savepoints, optional.</span><br><span class="hljs-comment">#</span><br><span class="hljs-comment"># state.savepoints.dir: hdfs://namenode-host:port/flink-savepoints</span><br><span class="hljs-attr">state.savepoints.dir:</span> <span class="hljs-string">hdfs:///flink/savepoints</span><br><br><span class="hljs-comment"># Flag to enable/disable incremental checkpoints for backends that</span><br><span class="hljs-comment"># support incremental checkpoints (like the RocksDB state backend). </span><br><span class="hljs-comment">#</span><br><span class="hljs-comment"># state.backend.incremental: false</span><br><span class="hljs-attr">state.backend.incremental:</span> <span class="hljs-literal">true</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>配置启动所需的环境变量<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">vim bin/config.sh<br><span class="hljs-built_in">export</span> HADOOP_CLASSPATH=`hadoop classpath`<br><br>vim /ect/profile.d/my_env.sh<br><span class="hljs-built_in">export</span> HADOOP_CONF_DIR=<span class="hljs-variable">$HADOOP_HOME</span>/etc/hadoop<br><span class="hljs-built_in">export</span> YARN_CONF_DIR=<span class="hljs-variable">$HADOOP_HOME</span>/etc/hadoop<br></code></pre></td></tr></table></figure></li>
+</ul>
+<p>&#x2F;etc&#x2F;profil.d&#x2F;my_env.sh</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">export</span> JAVA_HOME=/usr/lib/jvm/java-8-openjdk-arm64<br><span class="hljs-built_in">export</span> PATH=<span class="hljs-variable">$PATH</span>:<span class="hljs-variable">$JAVA_HOME</span>/bin<br><br><span class="hljs-built_in">export</span> HADOOP_HOME=/opt/ha/hadoop-3.3.0<br><span class="hljs-built_in">export</span> PATH=<span class="hljs-variable">$PATH</span>:<span class="hljs-variable">$HADOOP_HOME</span>/bin<br><span class="hljs-built_in">export</span> PATH=<span class="hljs-variable">$PATH</span>:<span class="hljs-variable">$HADOOP_HOME</span>/sbin<br><br><span class="hljs-built_in">export</span> ZK_HOME=/opt/zk/zookeeper<br><span class="hljs-built_in">export</span> PATH=<span class="hljs-variable">$PATH</span>:<span class="hljs-variable">$ZK_HOME</span>/bin<br><br><span class="hljs-built_in">export</span> HIVE_HOME=/opt/hive/hive3.1.3<br><span class="hljs-built_in">export</span> PATH=<span class="hljs-variable">$PATH</span>:<span class="hljs-variable">$HIVE_HOME</span>/bin<br><br><span class="hljs-built_in">export</span> HADOOP_CONF_DIR=<span class="hljs-variable">$HADOOP_HOME</span>/etc/hadoop<br><span class="hljs-built_in">export</span> YARN_CONF_DIR=<span class="hljs-variable">$HADOOP_HOME</span>/etc/hadoop<br><br><span class="hljs-built_in">export</span> HADOOP_CLASSPATH=`hadoop classpath`<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><p>启动yarn-session,及提交sql</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 启动yarn-session</span><br>./bin/yarn-session.sh -jm 2048M -yn <span class="hljs-string">&quot;flink-hudi&quot;</span> -d<br><br><span class="hljs-comment"># 通过文件形式提交sql到yarn-session中.</span><br>./bin/sql-client.sh embedded -s yarn-session -f sqls/xxxx.sql<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>MySQL开启binlog</p>
+  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs conf">cat my.cnf<br>#设置日志三种格式：STATEMENT、ROW、MIXED 。<br>binlog_format = ROW<br>#设置日志路径，注意路经需要mysql用户有权限写<br>log-bin = /var/lib/mysql/mysql-bin<br>#设置binlog清理时间<br>expire_logs_days = 15<br>#binlog每个日志文件大小<br>max_binlog_size = 200m<br>#binlog缓存大小<br>binlog_cache_size = 4m<br>#最大binlog缓存大小<br>max_binlog_cache_size = 512m<br><br>server-id=1<br><br>default-time_zone = &#x27;+8:00&#x27;<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>使用工具批量插入数据到mysql</p>
+<p>  <a target="_blank" rel="noopener" href="https://developer.aliyun.com/article/852227">https://developer.aliyun.com/article/852227</a></p>
+  <figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs txt">id||int||自增id[:inc(id,30000)]<br>name||varchar(20)||学生名字<br>school||varchar(20)||学校名字[:enum(qinghua,beida,shanghaijiaoda,fudan,xidian,zhongda)]<br>nickname||varchar(20)||学生小名[:enum(tom,tony,mick,rich,jasper)]<br>age||int||学生年龄[:age]<br>class_num||int||班级人数[:int(10, 100)]<br>phone||bigint||电话号码[:phone_number]<br>email||varchar(64)||家庭网络邮箱[:email]<br>ip||varchar(32)||IP地址[:ipv4]<br></code></pre></td></tr></table></figure>
+  <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs sql"><span class="hljs-comment">-- auto-generated definition</span><br><span class="hljs-keyword">create</span> <span class="hljs-keyword">table</span> stu3<br>(<br>    id        <span class="hljs-type">int</span> unsigned auto_increment comment <span class="hljs-string">&#x27;自增id&#x27;</span><br>        <span class="hljs-keyword">primary</span> key,<br>    name      <span class="hljs-type">varchar</span>(<span class="hljs-number">20</span>) <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span> comment <span class="hljs-string">&#x27;学生名字&#x27;</span>,<br>    school    <span class="hljs-type">varchar</span>(<span class="hljs-number">20</span>) <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span> comment <span class="hljs-string">&#x27;学校名字&#x27;</span>,<br>    nickname  <span class="hljs-type">varchar</span>(<span class="hljs-number">20</span>) <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span> comment <span class="hljs-string">&#x27;学生小名&#x27;</span>,<br>    age       <span class="hljs-type">int</span>         <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span> comment <span class="hljs-string">&#x27;学生年龄&#x27;</span>,<br>    class_num <span class="hljs-type">int</span>         <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span> comment <span class="hljs-string">&#x27;班级人数&#x27;</span>,<br>    phone     <span class="hljs-type">bigint</span>      <span class="hljs-keyword">not</span> <span class="hljs-keyword">null</span> comment <span class="hljs-string">&#x27;电话号码&#x27;</span>,<br>    email     <span class="hljs-type">varchar</span>(<span class="hljs-number">64</span>) <span class="hljs-keyword">null</span> comment <span class="hljs-string">&#x27;家庭网络邮箱&#x27;</span>,<br>    ip        <span class="hljs-type">varchar</span>(<span class="hljs-number">32</span>) <span class="hljs-keyword">null</span> comment <span class="hljs-string">&#x27;IP地址&#x27;</span><br>)<br>    charset <span class="hljs-operator">=</span> utf8mb3;<br><br><br></code></pre></td></tr></table></figure>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">datafaker rdb mysql+mysqldb://root:root@hd000:3306/test?charset=utf8 stu3 30000 --meta meta.txt<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>hudi-hdfs目录最终效果</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs bash">hdfs dfs -<span class="hljs-built_in">ls</span> -h /tmp/hudi_flink/stu3_binlog_sink_hudi<br><br>drwxr-xr-x   - miao supergroup          0 2023-05-08 06:52 /tmp/hudi_flink/stu3_binlog_sink_hudi/.hoodie<br>drwxr-xr-x   - miao supergroup          0 2023-05-08 06:44 /tmp/hudi_flink/stu3_binlog_sink_hudi/beida<br>drwxr-xr-x   - miao supergroup          0 2023-05-08 06:44 /tmp/hudi_flink/stu3_binlog_sink_hudi/fudan<br>drwxr-xr-x   - miao supergroup          0 2023-05-08 06:44 /tmp/hudi_flink/stu3_binlog_sink_hudi/qinghua<br>drwxr-xr-x   - miao supergroup          0 2023-05-08 06:44 /tmp/hudi_flink/stu3_binlog_sink_hudi/shanghaijiaoda<br>drwxr-xr-x   - miao supergroup          0 2023-05-08 06:44 /tmp/hudi_flink/stu3_binlog_sink_hudi/xidian<br>drwxr-xr-x   - miao supergroup          0 2023-05-08 06:44 /tmp/hudi_flink/stu3_binlog_sink_hudi/zhongda<br>drwxr-xr-x   - miao supergroup          0 2023-05-08 06:43 /tmp/hudi_flink/stu3_binlog_sink_hudi/北京大学<br>drwxr-xr-x   - miao supergroup          0 2023-05-08 06:52 /tmp/hudi_flink/stu3_binlog_sink_hudi/清华<br></code></pre></td></tr></table></figure></li>
+<li><p>Flink依赖jar包:</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs bash">miao@hd001:/opt/flink/flink-1.15.4$ ll -ht lib/<br>total 317M<br>drwxr-xr-x 12 miao miao 4.0K May  8 06:19 ../<br>-rw-rw-r--  1 miao miao  22M May  4 11:12 flink-sql-connector-mysql-cdc-2.2.0.jar<br>drwxr-xr-x  2 miao miao 4.0K May  4 11:12 ./<br>-rw-rw-r--  1 miao miao 5.0M May  4 11:12 flink-sql-connector-kafka-1.15.4.jar<br>-rw-r--r--  1 miao miao 1.6M May  4 10:54 hadoop-mapreduce-client-core-3.3.0.jar<br>-rw-r--r--  1 miao miao 2.4M May  4 10:34 guava-20.0.jar<br>-rw-rw-r--  1 miao miao  91M May  4 10:14 hudi-flink1.15-bundle-0.12.3.jar<br>-rw-r--r--  1 miao miao 111M Mar  9 08:57 flink-dist-1.15.4.jar<br>-rw-r--r--  1 miao miao  35M Mar  9 08:55 flink-table-planner-loader-1.15.4.jar<br>-rw-r--r--  1 miao miao  15M Mar  9 08:55 flink-table-api-java-uber-1.15.4.jar<br>-rw-r--r--  1 miao miao  21M Mar  9 08:55 flink-scala_2.12-1.15.4.jar<br>-rw-r--r--  1 miao miao 172K Mar  9 08:51 flink-json-1.15.4.jar<br>-rw-r--r--  1 miao miao  93K Mar  9 08:49 flink-csv-1.15.4.jar<br>-rw-r--r--  1 miao miao 475K Mar  9 08:43 flink-connector-files-1.15.4.jar<br>-rw-r--r--  1 miao miao 2.9M Mar  9 08:42 flink-table-runtime-1.15.4.jar<br>-rw-r--r--  1 miao miao 190K Mar  9 08:41 flink-cep-1.15.4.jar<br>-rw-r--r--  1 miao miao  11M Feb  8  2022 flink-shaded-zookeeper-3.5.9.jar<br>-rw-r--r--  1 miao miao 204K Jan  4  2022 log4j-1.2-api-2.17.1.jar<br>-rw-r--r--  1 miao miao 295K Jan  4  2022 log4j-api-2.17.1.jar<br>-rw-r--r--  1 miao miao 1.8M Jan  4  2022 log4j-core-2.17.1.jar<br>-rw-r--r--  1 miao miao  24K Jan  4  2022 log4j-slf4j-impl-2.17.1.jar<br></code></pre></td></tr></table></figure>
+<p>  需要新增jar包:</p>
+  <figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs txt">flink-sql-connector-mysql-cdc-2.2.0.jar # 需要下载<br>flink-sql-connector-kafka-1.15.4.jar # 需要下载<br>hadoop-mapreduce-client-core-3.3.0.jar # 需从hadoop环境中copy<br>guava-20.0.jar # 解决冲突放入<br>hudi-flink1.15-bundle-0.12.3.jar # 需手动编译hudi得到<br></code></pre></td></tr></table></figure></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flink/" class="category-chain-item">Flink</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/Flink/Hudi/" class="category-chain-item">Hudi</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Flink/" class="print-no-link">#Flink</a>
+      
+        <a href="/tags/Hudi/" class="print-no-link">#Hudi</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Mysql-Flink-Hudi数据同步</div>
+      <div>https://e-miao.github.io/flink/Mysql-Flink-Hudi数据同步/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>e-miao</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年5月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/flink/Flink%20On%20K8S%20%E5%AE%9E%E8%B7%B5%E5%88%86%E4%BA%AB/" title="Flink On K8S 实践分享">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Flink On K8S 实践分享</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/linux/Vim%E6%8F%92%E4%BB%B6%E7%AE%A1%E7%90%86%E4%BD%BF%E7%94%A8/" title="Vim插件管理工具使用">
+                        <span class="hidden-mobile">Vim插件管理工具使用</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"e-miao/blog-comments","repo-id":"R_kgDOJKc4zQ","category":"Announcements","category-id":"DIC_kwDOJKc4zc4CU61N","theme-light":"light","theme-dark":"dark","mapping":"og:title","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
