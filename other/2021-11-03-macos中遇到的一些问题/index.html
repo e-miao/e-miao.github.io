@@ -1,0 +1,706 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/lxz_head.png">
+  <link rel="icon" href="/img/lxz_head.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="e-miao">
+  <meta name="keywords" content="macos中遇到的一些问题">
+  
+    <meta name="description" content="macos中遇到的一些问题">
+<meta property="og:type" content="article">
+<meta property="og:title" content="macos中遇到的一些问题">
+<meta property="og:url" content="https://e-miao.github.io/other/2021-11-03-macos%E4%B8%AD%E9%81%87%E5%88%B0%E7%9A%84%E4%B8%80%E4%BA%9B%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="e-miao">
+<meta property="og:description" content="macos中遇到的一些问题">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://e-miao.github.io/img/logo/macbook.png">
+<meta property="article:published_time" content="2021-11-03T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-11-03T00:00:00.000Z">
+<meta property="article:author" content="e-miao">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://e-miao.github.io/img/logo/macbook.png">
+  
+  
+  
+  <title>macos中遇到的一些问题 - e-miao</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"e-miao.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="e-miao" type="application/atom+xml">
+</head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>e-miao</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/friends/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="macos中遇到的一些问题"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-11-03 00:00" pubdate>
+          2021年11月3日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          636 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          6 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">macos中遇到的一些问题</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>记录自己在使用MacOS中遇到的一些问题.</p>
+<h2 id="Bash版本问题-gt-date命令问题"><a href="#Bash版本问题-gt-date命令问题" class="headerlink" title="Bash版本问题-&gt;date命令问题"></a>Bash版本问题-&gt;date命令问题</h2><ul>
+<li>场景:<br>自己在使用date命令时发现,本机mac和linux环境的中执行效果不一样;<br>linux可以正常执行,但是mac不行</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># linux 环境下</span><br>[root@localhost]~<span class="hljs-comment"># date -d &quot;2021-01-01 00:00:00&quot; +&quot;%Y%m%d&quot;</span><br>20210101<br><br><span class="hljs-comment"># mac</span><br>~ ❯ <span class="hljs-built_in">date</span> -d <span class="hljs-string">&quot;2021-01-01 00:00:00&quot;</span> +<span class="hljs-string">&quot;%Y%m%d&quot;</span><br>usage: <span class="hljs-built_in">date</span> [-jnRu] [-d dst] [-r seconds] [-t west] [-v[+|-]val[ymwdHMS]] ...<br>            [-f <span class="hljs-built_in">fmt</span> <span class="hljs-built_in">date</span> | [[[mm]<span class="hljs-built_in">dd</span>]HH]MM[[cc]yy][.ss]] [+format]<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>原因<br>查看bash版本发现:疑是版本问题.同时在升级完bash版本后无效,发现原因是: macos date 命令未遵循Linux规范</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment">#mac bash version</span><br>~ ❯ bash -version <br>GNU bash, version 3.2.57(1)-release (arm64-apple-darwin21)<br>Copyright (C) 2007 Free Software Foundation, Inc.<br><br><span class="hljs-comment"># linux bash version</span><br>[root@localhost]~<span class="hljs-comment"># bash -version</span><br>GNU bash， 版本 4.2.46(2)-release (x86_64-redhat-linux-gnu)<br>Copyright (C) 2011 Free Software Foundation, Inc.<br>许可证 GPLv3+: GNU GPL 许可证版本3或者更高 &lt;http://gnu.org/licenses/gpl.html&gt;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>解决方案</li>
+</ul>
+<p>升级bash,升级后无效; 最后发现:macos date 命令未遵循Linux规范,暂时无解.</p>
+<ol>
+<li>macos date <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">date</span> -v -1d -j -f <span class="hljs-string">&#x27;%Y-%m-%d&#x27;</span> <span class="hljs-string">&#x27;2021-10-01&#x27;</span> +<span class="hljs-string">&quot;%Y/%m/%d&quot;</span><br>2021/09/30<br></code></pre></td></tr></table></figure></li>
+<li>linux date<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">date</span> -d<span class="hljs-string">&#x27;-1 day 2021-10-01&#x27;</span> +<span class="hljs-string">&quot;%Y/%m/%d&quot;</span><br>2021/09/30<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="M1-MacOS-RocksDB报错"><a href="#M1-MacOS-RocksDB报错" class="headerlink" title="M1 MacOS RocksDB报错"></a>M1 MacOS RocksDB报错</h2><p>librocksdbjni-osx.jnilib’ (mach-o file, but is an incompatible architecture (have ‘x86_64’, need ‘arm64e’))</p>
+<p>现象: </p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs log">Caused by: java.lang.UnsatisfiedLinkError: /private/var/folders/yy/bzy10qzx6tqdtl8c6rglyc5m0000gn/T/rocksdb-lib-3af5f881382477b5f054b9f48837917c/librocksdbjni-osx.jnilib: dlopen(/private/var/folders/yy/bzy10qzx6tqdtl8c6rglyc5m0000gn/T/rocksdb-lib-3af5f881382477b5f054b9f48837917c/librocksdbjni-osx.jnilib, 0x0001): tried: &#x27;/private/var/folders/yy/bzy10qzx6tqdtl8c6rglyc5m0000gn/T/rocksdb-lib-3af5f881382477b5f054b9f48837917c/librocksdbjni-osx.jnilib&#x27; (mach-o file, but is an incompatible architecture (have &#x27;x86_64&#x27;, need &#x27;arm64e&#x27;)), &#x27;/usr/lib/librocksdbjni-osx.jnilib&#x27; (no such file)<br>	at java.lang.ClassLoader$NativeLibrary.load(Native Method)<br>	at java.lang.ClassLoader.loadLibrary0(ClassLoader.java:1950)<br>	at java.lang.ClassLoader.loadLibrary(ClassLoader.java:1832)<br>	at java.lang.Runtime.load0(Runtime.java:811)<br>	at java.lang.System.load(System.java:1088)<br>	at org.rocksdb.NativeLibraryLoader.loadLibraryFromJar(NativeLibraryLoader.java:78)<br>	at org.rocksdb.NativeLibraryLoader.loadLibrary(NativeLibraryLoader.java:56)<br>	at org.apache.flink.contrib.streaming.state.EmbeddedRocksDBStateBackend.ensureRocksDBIsLoaded(EmbeddedRocksDBStateBackend.java:860)<br>	... 17 more<br><br></code></pre></td></tr></table></figure>
+<p>暂时无法解决,尚未支持M1 <a target="_blank" rel="noopener" href="https://github.com/facebook/rocksdb/issues/7720">https://github.com/facebook/rocksdb/issues/7720</a></p>
+<p>2022年07月19日更新：<br>RocksDB 6.29.4.1 版本已更新支持：<a target="_blank" rel="noopener" href="https://github.com/facebook/rocksdb/issues/7720#issuecomment-1079648907">https://github.com/facebook/rocksdb/issues/7720#issuecomment-1079648907</a><br>maven: <a target="_blank" rel="noopener" href="https://mvnrepository.com/artifact/org.rocksdb/rocksdbjni">https://mvnrepository.com/artifact/org.rocksdb/rocksdbjni</a></p>
+<h2 id="“xxxxxx”已损坏，无法打开。-您应该将它移到废纸篓。"><a href="#“xxxxxx”已损坏，无法打开。-您应该将它移到废纸篓。" class="headerlink" title="“xxxxxx”已损坏，无法打开。 您应该将它移到废纸篓。"></a>“xxxxxx”已损坏，无法打开。 您应该将它移到废纸篓。</h2><p>发生这种情况是因为app开发者没有付费获得Apple开发者许可证；导致app对于Macos系统没有得到公证许可。<br>解决方案</p>
+<ul>
+<li>方法1：绕过公证<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">sudo xattr -rd com.apple.quarantine /Applications/xxxxxx.app<br></code></pre></td></tr></table></figure>
+或<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">sudo xattr -rd com.apple.quarantine <br></code></pre></td></tr></table></figure></li>
+<li>方案2：安装时绕过公证<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">brew install librewolf --no-quarantine <br></code></pre></td></tr></table></figure></li>
+</ul>
+<p>参考文章：<br>方法1：<a target="_blank" rel="noopener" href="https://macwk.com/article/macos-file-damage">https://macwk.com/article/macos-file-damage</a><br>方法2：<a target="_blank" rel="noopener" href="https://librewolf.net/docs/faq/#how-do-i-get-native-messaging-to-work-1">https://librewolf.net/docs/faq/#how-do-i-get-native-messaging-to-work-1</a></p>
+<h1 id="打开终端提示-”You-have-mail“"><a href="#打开终端提示-”You-have-mail“" class="headerlink" title="打开终端提示 ”You have mail“"></a>打开终端提示 ”You have mail“</h1><p>执行mail命令，接着删除文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">mail<br>d *<br></code></pre></td></tr></table></figure>
+<p>删除mail相关文件 <strong>记得替换USERNAME为本地电脑的用户名</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">rm</span> -rf /var/mail/USENAME<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Other/" class="category-chain-item">Other</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>macos中遇到的一些问题</div>
+      <div>https://e-miao.github.io/other/2021-11-03-macos中遇到的一些问题/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>e-miao</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年11月3日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/flume/2021-11-19-flume-%E4%BC%98%E5%8C%96/" title="Flume 优化">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Flume 优化</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/flink/2021-09-10-Flink1.13.2%E6%89%8B%E5%8A%A8%E7%BC%96%E8%AF%91/" title="Flink1.13.2手动编译">
+                        <span class="hidden-mobile">Flink1.13.2手动编译</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"e-miao/blog-comments","repo-id":"R_kgDOJKc4zQ","category":"Announcements","category-id":"DIC_kwDOJKc4zc4CU61N","theme-light":"light","theme-dark":"dark","mapping":"og:title","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

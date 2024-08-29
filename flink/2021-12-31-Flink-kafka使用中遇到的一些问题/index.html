@@ -1,0 +1,716 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/lxz_head.png">
+  <link rel="icon" href="/img/lxz_head.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="e-miao">
+  <meta name="keywords" content="Flink-Kafka-Problems">
+  
+    <meta name="description" content="Flink消费Kafka时遇到的一些问题汇总,不定时更新.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flink消费Kafka时遇到的一些问题汇总">
+<meta property="og:url" content="https://e-miao.github.io/flink/2021-12-31-Flink-kafka%E4%BD%BF%E7%94%A8%E4%B8%AD%E9%81%87%E5%88%B0%E7%9A%84%E4%B8%80%E4%BA%9B%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="e-miao">
+<meta property="og:description" content="Flink消费Kafka时遇到的一些问题汇总,不定时更新.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://e-miao.github.io/img/logo/flink_kafka.png">
+<meta property="article:published_time" content="2021-12-31T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-31T00:00:00.000Z">
+<meta property="article:author" content="e-miao">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://e-miao.github.io/img/logo/flink_kafka.png">
+  
+  
+  
+  <title>Flink消费Kafka时遇到的一些问题汇总 - e-miao</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"e-miao.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="e-miao" type="application/atom+xml">
+</head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>e-miao</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/friends/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Flink消费Kafka时遇到的一些问题汇总"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-12-31 00:00" pubdate>
+          2021年12月31日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          638 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          6 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Flink消费Kafka时遇到的一些问题汇总</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>记录一些在使用flink消费kafka时,遇到一些优化问题和框架问题,不定时更新一些新的问题.</p>
+<h2 id="软件版本"><a href="#软件版本" class="headerlink" title="软件版本"></a>软件版本</h2><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs markdown">flink: 1.13.2<br>kafka: 2.5.0<br>hadoop: 3.2.1<br>centos 7<br></code></pre></td></tr></table></figure>
+
+<h2 id="flink-checkpoint警告日志"><a href="#flink-checkpoint警告日志" class="headerlink" title="flink checkpoint警告日志"></a>flink checkpoint警告日志</h2><ul>
+<li><p>日志1:</p>
+  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs log">[DataStreamer for file /flink/checkpoints/xxx083408/097a5dc4d32c739760d33baea57f9679/shared/7832d571-5039-4c15-ae7f-99c874c64c55] WARN  org.apache.hadoop.hdfs.DataStreamer  - Caught exception<br>java.lang.InterruptedException: null<br>        at java.lang.Object.wait(Native Method)<br>        at java.lang.Thread.join(Thread.java:1252)<br>        at java.lang.Thread.join(Thread.java:1326)<br>        at org.apache.hadoop.hdfs.DataStreamer.closeResponder(DataStreamer.java:986)<br></code></pre></td></tr></table></figure></li>
+<li><p>原因:</p>
+<p>  hadoop自身BUG<br>  文档说明: <a target="_blank" rel="noopener" href="https://issues.apache.org/jira/browse/HDFS-10429">https://issues.apache.org/jira/browse/HDFS-10429</a>	</p>
+</li>
+<li><p>日志2:</p>
+  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs log">block BP-1644493283-172.34.242.137-1636089673161:blk_1076991017_3256384] WARN  org.apache.hadoop.hdfs.DataStreamer  - DataStreamer Exception<br>java.nio.channels.ClosedByInterruptException: null<br>        at java.nio.channels.spi.AbstractInterruptibleChannel.end(AbstractInterruptibleChannel.java:202)<br>        at sun.nio.ch.SocketChannelImpl.write(SocketChannelImpl.java:477)<br>        at org.apache.hadoop.net.SocketOutputStream$Writer.performIO(SocketOutputStream.java:63)<br>        at org.apache.hadoop.net.SocketIOWithTimeout.doIO(SocketIOWithTimeout.java:142)<br>        at org.apache.hadoop.net.SocketOutputStream.write(SocketOutputStream.java:159)<br>        at org.apache.hadoop.net.SocketOutputStream.write(SocketOutputStream.java:117)<br>        at java.io.BufferedOutputStream.flushBuffer(BufferedOutputStream.java:82)<br>        at java.io.BufferedOutputStream.flush(BufferedOutputStream.java:140)<br>        at java.io.DataOutputStream.flush(DataOutputStream.java:123)<br>        at org.apache.hadoop.hdfs.DataStreamer.run(DataStreamer.java:775)<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>原因:<br>  flink论坛给出由于hadoop bug造成.<br>  link: <a target="_blank" rel="noopener" href="https://issues.apache.org/jira/browse/FLINK-13228">https://issues.apache.org/jira/browse/FLINK-13228</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="flink消费kafka事务超时问题"><a href="#flink消费kafka事务超时问题" class="headerlink" title="flink消费kafka事务超时问题"></a>flink消费kafka事务超时问题</h2><p>日志现象:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs log">Map -&gt; Sink: late_log_to_kafka)-xxxxx-51, producerId=19575, epoch=9071] has been open for 304327 ms. This is close to or even exceeding the transaction timeout of 300000 ms.<br></code></pre></td></tr></table></figure>
+<ul>
+<li>flink官网文档建议<br>增加超时时间: <figure class="highlight pf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs pf"><span class="hljs-number">1</span>. 调整kafka-broker中transaction.<span class="hljs-keyword">max</span>.<span class="hljs-keyword">timeout</span>.ms时间<br>transaction.<span class="hljs-keyword">max</span>.<span class="hljs-keyword">timeout</span>.ms:默认<span class="hljs-number">15</span><span class="hljs-keyword">min</span><br><br><span class="hljs-number">2</span>. 调整flink-kafka-producer<br>transaction.<span class="hljs-keyword">timeout</span>.ms: 默认<span class="hljs-number">1</span>hour<br>实际使用中 transaction.<span class="hljs-keyword">timeout</span>.ms设置了 <span class="hljs-number">5</span><span class="hljs-keyword">min</span>,因为出现此问题,增大到<span class="hljs-number">12</span><span class="hljs-keyword">min</span>.(主要是不想去设置kafka-borker,需要重启)<br><br>kafkaProp.put(ProducerConfig.TRANSACTION_TIMEOUT_CONFIG, <span class="hljs-number">12</span> * <span class="hljs-number">60</span> * <span class="hljs-number">1000</span>);//<span class="hljs-number">12</span><span class="hljs-keyword">min</span><br><br></code></pre></td></tr></table></figure>
+link: <a target="_blank" rel="noopener" href="https://nightlies.apache.org/flink/flink-docs-release-1.13/docs/connectors/datastream/kafka/#kafka-producers-and-fault-tolerance">https://nightlies.apache.org/flink/flink-docs-release-1.13/docs/connectors/datastream/kafka/#kafka-producers-and-fault-tolerance</a></li>
+</ul>
+<h2 id="flink-checkpoint失败优化"><a href="#flink-checkpoint失败优化" class="headerlink" title="flink-checkpoint失败优化"></a>flink-checkpoint失败优化</h2><ul>
+<li><p>现象</p>
+<p>  flink exactly_one 消费kafka时,kafka峰值流量过大,且分区较多时(且机器资源有限),容易导致checkpoint-data过大,checkpoint失败或超时.</p>
+</li>
+<li><p>解决方法: </p>
+<p>  增加 kafkaProducersPoolSize 大小,默认5.根据实际情况增大其值.</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java">* &lt;li&gt;decrease number of max concurrent checkpoints<br>* &lt;li&gt;make checkpoints more <span class="hljs-title function_">reliable</span> <span class="hljs-params">(so that they complete faster)</span><br>* &lt;li&gt;increase the delay between checkpoints<br>* &lt;li&gt;increase the size of &#123;<span class="hljs-meta">@link</span> FlinkKafkaInternalProducer&#125;s pool<br></code></pre></td></tr></table></figure>
+</li>
+<li><p>参考源码:</p>
+<p>  flink-kafka-producer</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment">    * Creates a FlinkKafkaProducer for a given topic. The sink produces its input to the topic. It</span><br><span class="hljs-comment">    * accepts a &#123;<span class="hljs-doctag">@link</span> KafkaSerializationSchema&#125; and possibly a custom &#123;<span class="hljs-doctag">@link</span></span><br><span class="hljs-comment">    * FlinkKafkaPartitioner&#125;.</span><br><span class="hljs-comment">    *</span><br><span class="hljs-comment">    * <span class="hljs-doctag">@param</span> defaultTopic The default topic to write data to</span><br><span class="hljs-comment">    * <span class="hljs-doctag">@param</span> serializationSchema A serializable serialization schema for turning user objects into</span><br><span class="hljs-comment">    *     a kafka-consumable byte[] supporting key/value messages</span><br><span class="hljs-comment">    * <span class="hljs-doctag">@param</span> producerConfig Configuration properties for the KafkaProducer. &#x27;bootstrap.servers.&#x27; is</span><br><span class="hljs-comment">    *     the only required argument.</span><br><span class="hljs-comment">    * <span class="hljs-doctag">@param</span> semantic Defines semantic that will be used by this producer (see &#123;<span class="hljs-doctag">@link</span></span><br><span class="hljs-comment">    *     FlinkKafkaProducer.Semantic&#125;).</span><br><span class="hljs-comment">    * <span class="hljs-doctag">@param</span> kafkaProducersPoolSize Overwrite default KafkaProducers pool size (see &#123;<span class="hljs-doctag">@link</span></span><br><span class="hljs-comment">    *     FlinkKafkaProducer.Semantic#EXACTLY_ONCE&#125;).</span><br><span class="hljs-comment">    */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">FlinkKafkaProducer</span><span class="hljs-params">(</span><br><span class="hljs-params">            String defaultTopic,</span><br><span class="hljs-params">            KafkaSerializationSchema&lt;IN&gt; serializationSchema,</span><br><span class="hljs-params">            Properties producerConfig,</span><br><span class="hljs-params">            FlinkKafkaProducer.Semantic semantic,</span><br><span class="hljs-params">            <span class="hljs-type">int</span> kafkaProducersPoolSize)</span> &#123;<br>        <span class="hljs-built_in">this</span>(<br>                defaultTopic,<br>                <span class="hljs-literal">null</span>,<br>                <span class="hljs-literal">null</span>, <span class="hljs-comment">/* keyed schema and FlinkKafkaPartitioner */</span><br>                serializationSchema,<br>                producerConfig,<br>                semantic,<br>                kafkaProducersPoolSize);<br>    &#125;<br></code></pre></td></tr></table></figure>
+<p>  Semantic.EXACTLY_ONCE</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment">    * Semantics that can be chosen.</span><br><span class="hljs-comment">    * &lt;li&gt;&#123;<span class="hljs-doctag">@link</span> #EXACTLY_ONCE&#125;</span><br><span class="hljs-comment">    * &lt;li&gt;&#123;<span class="hljs-doctag">@link</span> #AT_LEAST_ONCE&#125;</span><br><span class="hljs-comment">    * &lt;li&gt;&#123;<span class="hljs-doctag">@link</span> #NONE&#125;</span><br><span class="hljs-comment">    */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">enum</span> <span class="hljs-title class_">Semantic</span> &#123;<br><br>        <span class="hljs-comment">/**</span><br><span class="hljs-comment">        * Semantic.EXACTLY_ONCE the Flink producer will write all messages in a Kafka transaction</span><br><span class="hljs-comment">        * that will be committed to Kafka on a checkpoint.</span><br><span class="hljs-comment">        *</span><br><span class="hljs-comment">        * &lt;p&gt;In this mode &#123;<span class="hljs-doctag">@link</span> FlinkKafkaProducer&#125; sets up a pool of &#123;<span class="hljs-doctag">@link</span></span><br><span class="hljs-comment">        * FlinkKafkaInternalProducer&#125;. Between each checkpoint a Kafka transaction is created,</span><br><span class="hljs-comment">        * which is committed on &#123;<span class="hljs-doctag">@link</span> FlinkKafkaProducer#notifyCheckpointComplete(long)&#125;. If</span><br><span class="hljs-comment">        * checkpoint complete notifications are running late, &#123;<span class="hljs-doctag">@link</span> FlinkKafkaProducer&#125; can run</span><br><span class="hljs-comment">        * out of &#123;<span class="hljs-doctag">@link</span> FlinkKafkaInternalProducer&#125;s in the pool. In that case any subsequent</span><br><span class="hljs-comment">        * &#123;<span class="hljs-doctag">@link</span> FlinkKafkaProducer#snapshotState(FunctionSnapshotContext)&#125; requests will fail and</span><br><span class="hljs-comment">        * &#123;<span class="hljs-doctag">@link</span> FlinkKafkaProducer&#125; will keep using the &#123;<span class="hljs-doctag">@link</span> FlinkKafkaInternalProducer&#125; from</span><br><span class="hljs-comment">        * the previous checkpoint. To decrease the chance of failing checkpoints there are four</span><br><span class="hljs-comment">        * options:</span><br><span class="hljs-comment">        * &lt;li&gt;decrease number of max concurrent checkpoints</span><br><span class="hljs-comment">        * &lt;li&gt;make checkpoints more reliable (so that they complete faster)</span><br><span class="hljs-comment">        * &lt;li&gt;increase the delay between checkpoints</span><br><span class="hljs-comment">        * &lt;li&gt;increase the size of &#123;<span class="hljs-doctag">@link</span> FlinkKafkaInternalProducer&#125;s pool</span><br><span class="hljs-comment">        */</span><br>        EXACTLY_ONCE,<br><br>        <span class="hljs-comment">/**</span><br><span class="hljs-comment">        * Semantic.AT_LEAST_ONCE the Flink producer will wait for all outstanding messages in the</span><br><span class="hljs-comment">        * Kafka buffers to be acknowledged by the Kafka producer on a checkpoint.</span><br><span class="hljs-comment">        */</span><br>        AT_LEAST_ONCE,<br><br>        <span class="hljs-comment">/**</span><br><span class="hljs-comment">        * Semantic.NONE means that nothing will be guaranteed. Messages can be lost and/or</span><br><span class="hljs-comment">        * duplicated in case of failure.</span><br><span class="hljs-comment">        */</span><br>        NONE<br>    &#125;<br></code></pre></td></tr></table></figure></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flink/" class="category-chain-item">Flink</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/Flink/Kafka/" class="category-chain-item">Kafka</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Flink消费Kafka时遇到的一些问题汇总</div>
+      <div>https://e-miao.github.io/flink/2021-12-31-Flink-kafka使用中遇到的一些问题/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>e-miao</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年12月31日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/blog/2022-07-08-%E8%BF%81%E7%A7%BB%E5%8D%9A%E5%AE%A2%E4%BD%BF%E7%94%A8Hexo/" title="迁移博客使用Hexo">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">迁移博客使用Hexo</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/flink/2021-11-29-FlinkWriteToClickhouse%E9%81%87%E5%88%B0%E7%9A%84%E4%B8%80%E4%BA%9B%E9%97%AE%E9%A2%98/" title="Flink Write Data to Clickhouse 遇到的一些问题.">
+                        <span class="hidden-mobile">Flink Write Data to Clickhouse 遇到的一些问题.</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"e-miao/blog-comments","repo-id":"R_kgDOJKc4zQ","category":"Announcements","category-id":"DIC_kwDOJKc4zc4CU61N","theme-light":"light","theme-dark":"dark","mapping":"og:title","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

@@ -1,0 +1,685 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/lxz_head.png">
+  <link rel="icon" href="/img/lxz_head.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="e-miao">
+  <meta name="keywords" content="docker install,docker helloworld">
+  
+    <meta name="description" content="docker的安装,helloworld,以及常用命令">
+<meta property="og:type" content="article">
+<meta property="og:title" content="docker学习笔记(二)Dockerfile">
+<meta property="og:url" content="https://e-miao.github.io/docker/2017-07-13-docker%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E4%BA%8C--Dockerfile/index.html">
+<meta property="og:site_name" content="e-miao">
+<meta property="og:description" content="docker的安装,helloworld,以及常用命令">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2017-07-13T00:00:00.000Z">
+<meta property="article:modified_time" content="2017-07-13T00:00:00.000Z">
+<meta property="article:author" content="e-miao">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>docker学习笔记(二)Dockerfile - e-miao</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"e-miao.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="e-miao" type="application/atom+xml">
+</head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>e-miao</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/friends/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="docker学习笔记(二)Dockerfile"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2017-07-13 00:00" pubdate>
+          2017年7月13日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          634 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          6 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">docker学习笔记(二)Dockerfile</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="docker学习笔记二–Dockerfile"><a href="#docker学习笔记二–Dockerfile" class="headerlink" title="docker学习笔记二–Dockerfile"></a>docker学习笔记二–Dockerfile</h2><hr>
+<p>参考自<a target="_blank" rel="noopener" href="https://docs.docker.com/engine/reference/builder/#usage">官方文档-Dockerfile</a>部分</p>
+<h3 id="一-Dockerfile中常用的指令简介"><a href="#一-Dockerfile中常用的指令简介" class="headerlink" title="(一)Dockerfile中常用的指令简介"></a>(一)Dockerfile中常用的指令简介</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><code class="hljs bash">FROM <span class="hljs-comment">#来源于某个基础镜像</span><br>FROM ubuntu 16.04<br><br><br>LABEL<br>ARG SPRING_PROFILE_ACTIVE <span class="hljs-comment">#获取外部参数 SPRING_PROFILE_ACTIVE为外部参数的名称</span><br>RUN  <span class="hljs-comment">#运行镜像中系统级的命令</span><br>RUN apt-get uppdate &amp;&amp; apt-get install -y <br><br>RUN apt-get update &amp;&amp; apt-get install -y \<br>    aufs-tools \<br>    automake \<br>    build-essential \<br>    curl \<br>    dpkg-sig \<br>    libcap-dev \<br>    libsqlite3-dev \<br>    mercurial \<br>    reprepro \<br>    ruby1.9.1 \<br>    ruby1.9.1-dev \<br>    s3cmd=1.1.* \<br> &amp;&amp; <span class="hljs-built_in">rm</span> -rf /var/lib/apt/lists/*<br><br>RUN [<span class="hljs-string">&quot;/bin/bash&quot;</span>, <span class="hljs-string">&quot;-c&quot;</span>, <span class="hljs-string">&quot;set -o pipefail &amp;&amp; wget -O - https://some.site | wc -l &gt; /number&quot;</span>]<br><br>CMD  <span class="hljs-comment">#运行非系统级别的命令</span><br>CMD [<span class="hljs-string">&quot;perl&quot;</span>, <span class="hljs-string">&quot;-de0&quot;</span>]<br>ENV  <span class="hljs-comment">#设置系统参数</span><br>ADD or COPY <br><br>COPY /home/userName/xxx.jar  /images/  <span class="hljs-comment">#讲系统中的内容copy到镜像中的指定目录</span><br>ENV profile <span class="hljs-variable">$&#123;SPRING_PROFILE_ACTIVE&#125;</span> <span class="hljs-comment">#设置参数  $&#123;SPRING_PROFILE_ACTIVE&#125;为外部传入参数</span><br>CMD [bash,-c,java -jar /xxx.jar --spring.profiles.active=<span class="hljs-variable">$&#123;profile&#125;</span>]<br><br>(/home/userName/xxx.jar为当前系统目录下的内容) 目标地址为镜像目录 /images/<br> <br>EXPOSE  <span class="hljs-comment"># 不常用,后续补充该字段</span><br>ENTRYPOINT<br>VOLUME<br>USER<br>WORKDIR<br>ONBUILD<br><br></code></pre></td></tr></table></figure>
+<h3 id="二-一些简单的Dockerfile示例"><a href="#二-一些简单的Dockerfile示例" class="headerlink" title="(二)一些简单的Dockerfile示例"></a>(二)一些简单的Dockerfile示例</h3><blockquote>
+<p>以下为一个简介版本的Dockerfile</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash">FROM openjdk:8<br>ARG SPRING_PROFILE_ACTIVE<br> <br>ENV SPRING_PROFILE_ACTIVE <span class="hljs-variable">$&#123;SPRING_PROFILE_ACTIVE&#125;</span><br><br>COPY demo-www-1.0-SNAPSHOT.jar  /temp/<br><br>CMD [bash,-c,java -jar   /temp/demo-www-1.0-SNAPSHOT.jar --spring.profiles.active=<span class="hljs-variable">$&#123;SPRING_PROFILE_ACTIVE&#125;</span>] <br></code></pre></td></tr></table></figure>
+<blockquote>
+<p>项目中使用的镜像</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 基于一个简介版本的可运行jdk环境的docker镜像</span><br>FROM reg.longdai.com/base/openjdk:8u131-jdk-alpine<br><br><span class="hljs-comment"># 作者信息</span><br>MAINTAINER mritd &lt;mritd@mritd.me&gt;<br><br><span class="hljs-comment"># 获取参数</span><br>ARG SPRING_PROFILE_ACTIVE<br>ARG PROJECT_BUILD_FINALNAME<br><br><span class="hljs-comment"># 设置时区,项目参数,项目名称</span><br>ENV TZ <span class="hljs-string">&#x27;Asia/Shanghai&#x27;</span><br>ENV SPRING_PROFILE_ACTIVE <span class="hljs-variable">$&#123;SPRING_PROFILE_ACTIVE&#125;</span><br>ENV PROJECT_BUILD_FINALNAME <span class="hljs-variable">$&#123;PROJECT_BUILD_FINALNAME&#125;</span><br><br><span class="hljs-comment"># 运行命令设置和安装 搭建项目所需要环境</span><br>RUN apk upgrade --update \<br>    &amp;&amp; apk add tzdata bash \<br>    &amp;&amp; <span class="hljs-built_in">ln</span> -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \<br>    &amp;&amp; <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Asia/Shanghai&quot;</span> &gt; /etc/timezone \<br>    &amp;&amp; <span class="hljs-built_in">rm</span> -rf /var/cache/apk/*<br><br><span class="hljs-comment"># copy 项目中可运行的jar包到镜像中</span><br>COPY target/<span class="hljs-variable">$&#123;PROJECT_BUILD_FINALNAME&#125;</span>.jar /<span class="hljs-variable">$&#123;PROJECT_BUILD_FINALNAME&#125;</span>.jar<br><br><span class="hljs-comment"># 执行启动命令,项目使用spring-boot框架搭建,所以直接使用此命令就好</span><br>CMD [<span class="hljs-string">&quot;bash&quot;</span>,<span class="hljs-string">&quot;-c&quot;</span>,<span class="hljs-string">&quot;java -jar /<span class="hljs-variable">$&#123;PROJECT_BUILD_FINALNAME&#125;</span>.jar --spring.profiles.active=<span class="hljs-variable">$&#123;SPRING_PROFILE_ACTIVE&#125;</span>&quot;</span>]<br><br><span class="hljs-comment"># 更复杂的Dockerfile待更新</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="三-build-Dcokerfile"><a href="#三-build-Dcokerfile" class="headerlink" title="(三)build Dcokerfile"></a>(三)build Dcokerfile</h3><p>写完Dockerfile后,使用docker build 命令build自己的镜像</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs sh">docker build /path/to/a/Dockerfile  -t testDocker:1.2 .<br><br>docker -H https://githu.com/xxx/xxx.git  build -t image_name:1.12 --build-arg SPRING_PROFILE_ACTIVE=dohko   PROJECT_BUILD_FINALNAME=longdai-p2p-core longdai-core<br><br><span class="hljs-comment"># 为镜像指定tag</span><br>docker -H <span class="hljs-variable">$DOHKO_BUILD_HOST_19</span> tag <span class="hljs-variable">$IMAGE_NAME</span> <span class="hljs-variable">$LATEST_IMAGE_NAME</span><br><br><span class="hljs-comment"># 将镜像push到指定仓库</span><br>docker -H <span class="hljs-variable">$DOHKO_BUILD_HOST_19</span> push <span class="hljs-variable">$IMAGE_NAME</span><br><br><span class="hljs-comment"># 删除本地的docker镜像</span><br>docker -H <span class="hljs-variable">$DOHKO_BUILD_HOST_19</span>  rmi <span class="hljs-variable">$IMAGE_NAME</span><br><br><span class="hljs-comment"># 指定build的文件来源地址</span><br>-H https://githu.com/xxx/xxx.git <br><span class="hljs-comment"># build后的镜像名称为: image_name:1.12 </span><br>build -t image_name:1.12 <br><span class="hljs-comment"># build 时带入的参数</span><br>--build-arg SPRING_PROFILE_ACTIVE=dohko   PROJECT_BUILD_FINALNAME=longdai-p2p-core<br><span class="hljs-comment"># build的文件中的目录</span><br>longdai-core<br><br><br><br></code></pre></td></tr></table></figure>
+<p>更多详细的命令参考<a target="_blank" rel="noopener" href="https://docs.docker.com/engine/reference/builder/">官方文档Dockerfile reference</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/docker/" class="category-chain-item">docker</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>docker学习笔记(二)Dockerfile</div>
+      <div>https://e-miao.github.io/docker/2017-07-13-docker学习笔记二--Dockerfile/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>e-miao</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2017年7月13日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/linux/2017-07-18-linux%E4%B8%AD%E6%81%A2%E5%A4%8D%E5%88%A0%E9%99%A4%E7%9A%84%E6%96%87%E4%BB%B6/" title="linux下恢复删除的文件">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">linux下恢复删除的文件</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/docker/2017-07-07-docker%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0(%E4%B8%80)/" title="docker学习笔记(一)">
+                        <span class="hidden-mobile">docker学习笔记(一)</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"e-miao/blog-comments","repo-id":"R_kgDOJKc4zQ","category":"Announcements","category-id":"DIC_kwDOJKc4zc4CU61N","theme-light":"light","theme-dark":"dark","mapping":"og:title","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

@@ -1,0 +1,690 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/lxz_head.png">
+  <link rel="icon" href="/img/lxz_head.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="e-miao">
+  <meta name="keywords" content="Flink HDFS">
+  
+    <meta name="description" content="Flink Streaming 写入hdfs文件对应hive中间层dwd">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flink Streaming Write HDFS(parquet)">
+<meta property="og:url" content="https://e-miao.github.io/flink/2020-11-01-FlinkStreamingWriteHdfs/index.html">
+<meta property="og:site_name" content="e-miao">
+<meta property="og:description" content="Flink Streaming 写入hdfs文件对应hive中间层dwd">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://e-miao.github.io/img/logo/flink.png">
+<meta property="article:published_time" content="2020-11-01T00:00:00.000Z">
+<meta property="article:modified_time" content="2020-11-01T00:00:00.000Z">
+<meta property="article:author" content="e-miao">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://e-miao.github.io/img/logo/flink.png">
+  
+  
+  
+  <title>Flink Streaming Write HDFS(parquet) - e-miao</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"e-miao.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="e-miao" type="application/atom+xml">
+</head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>e-miao</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/friends/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Flink Streaming Write HDFS(parquet)"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2020-11-01 00:00" pubdate>
+          2020年11月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          652 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          6 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Flink Streaming Write HDFS(parquet)</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="Flink-Streaming写入hdfs"><a href="#Flink-Streaming写入hdfs" class="headerlink" title="Flink Streaming写入hdfs"></a>Flink Streaming写入hdfs</h1><ul>
+<li><p>需求背景:</p>
+<p> 因公司大数据后台升级,将kafka中日志流数据,实时解析,<br> 写入指定hdfs中(parquet格式,snapy压缩),以此,往实时数仓方向转.</p>
+</li>
+<li><p>相关软件版本:</p>
+  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs text">Flink:1.11.1<br>Java: 1.8<br>Scala: 2.12<br>Kafka:2.2.0<br>Hive: 2.1.1<br>Hadoop: 3.0.0<br></code></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2><ul>
+<li><p>主类</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br></pre></td><td class="code"><pre><code class="hljs java"> <br><span class="hljs-keyword">package</span> com.dz.bigdata.writer.hdfs;<br>        <br>    <span class="hljs-keyword">import</span> java.util.Objects;<br>    <span class="hljs-keyword">import</span> java.util.Properties;<br>    <br>    <span class="hljs-keyword">import</span> org.apache.flink.api.common.serialization.SimpleStringSchema;<br>    <span class="hljs-keyword">import</span> org.apache.flink.core.fs.Path;<br>    <span class="hljs-keyword">import</span> org.apache.flink.streaming.api.datastream.DataStreamSource;<br>    <span class="hljs-keyword">import</span> org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;<br>    <span class="hljs-keyword">import</span> org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;<br>    <span class="hljs-keyword">import</span> org.apache.flink.streaming.api.functions.sink.filesystem.OutputFileConfig;<br>    <span class="hljs-keyword">import</span> org.apache.flink.streaming.api.functions.sink.filesystem.StreamingFileSink;<br>    <span class="hljs-keyword">import</span> org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;<br>    <span class="hljs-keyword">import</span> org.apache.parquet.hadoop.metadata.CompressionCodecName;<br>    <span class="hljs-keyword">import</span> org.slf4j.Logger;<br>    <span class="hljs-keyword">import</span> org.slf4j.LoggerFactory;<br>    <br>    <span class="hljs-keyword">import</span> com.alibaba.fastjson.JSON;<br>    <span class="hljs-keyword">import</span> com.alibaba.fastjson.JSONObject;<br>    <span class="hljs-keyword">import</span> com.dz.bigdata.assinger.CommonEventTimeBucketAssigner;<br>    <span class="hljs-keyword">import</span> com.dz.bigdata.common.Constants;<br>    <span class="hljs-keyword">import</span> com.dz.bigdata.config.Config;<br>    <span class="hljs-keyword">import</span> com.dz.bigdata.format.ParquetAvroWriters;<br>    <span class="hljs-keyword">import</span> com.dz.bigdata.pojo.ServerStandardLog;<br>    <span class="hljs-keyword">import</span> com.dz.bigdata.writer.BaseEnv;<br>    <br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">ServerLogHdfsWriter</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">BaseEnv</span> &#123;<br>        <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">static</span> <span class="hljs-type">Logger</span> <span class="hljs-variable">LOG</span> <span class="hljs-operator">=</span> LoggerFactory.getLogger(ServerLogHdfsWriter.class);<br>        <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">static</span> <span class="hljs-type">int</span> <span class="hljs-variable">maxParallelism</span> <span class="hljs-operator">=</span> <span class="hljs-number">6</span>;<br>    <br>        <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>            Config.initArgs(args);<br>    <br>            <span class="hljs-type">String</span> <span class="hljs-variable">topic</span> <span class="hljs-operator">=</span> Config.getArgsRequiredValue(<span class="hljs-string">&quot;topic&quot;</span>);<br>            <span class="hljs-type">String</span> <span class="hljs-variable">groupId</span> <span class="hljs-operator">=</span> Config.getArgsRequiredValue(<span class="hljs-string">&quot;groupId&quot;</span>);<br>            <span class="hljs-type">String</span> <span class="hljs-variable">checkpointInterval</span> <span class="hljs-operator">=</span> Config.getArgsRequiredValue(<span class="hljs-string">&quot;checkpointInterval&quot;</span>);<br>            <span class="hljs-type">String</span> <span class="hljs-variable">location</span> <span class="hljs-operator">=</span> Config.getArgsRequiredValue(<span class="hljs-string">&quot;path&quot;</span>);<br>            <span class="hljs-type">int</span> <span class="hljs-variable">checkTime</span> <span class="hljs-operator">=</span> Integer.parseInt(checkpointInterval);<br>    <br>            <span class="hljs-type">StreamExecutionEnvironment</span> <span class="hljs-variable">env</span> <span class="hljs-operator">=</span> getStreamEnv(checkTime, <span class="hljs-string">&quot;/flink/checkpoints/flink_hdfs_writer_&quot;</span> + topic);<br>    <br>            <span class="hljs-type">Properties</span> <span class="hljs-variable">props</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Properties</span>();<br>            props.setProperty(<span class="hljs-string">&quot;bootstrap.servers&quot;</span>, Config.getPropValue(Constants.KAFKA_SERVER));<br>            props.setProperty(<span class="hljs-string">&quot;group.id&quot;</span>, groupId);<br>            env.setParallelism(maxParallelism);<br>    <br>            DataStreamSource&lt;String&gt; source =<br>                    env.addSource(<span class="hljs-keyword">new</span> <span class="hljs-title class_">FlinkKafkaConsumer</span>&lt;&gt;(topic, <span class="hljs-keyword">new</span> <span class="hljs-title class_">SimpleStringSchema</span>(), props));<br>    <br>            SingleOutputStreamOperator&lt;ServerStandardLog&gt; rowLog = source.map(line -&gt; &#123;<br>                <span class="hljs-keyword">try</span> &#123;<br>                    <span class="hljs-type">JSONObject</span> <span class="hljs-variable">jsonObject</span> <span class="hljs-operator">=</span> JSON.parseObject(line);<br>                    <span class="hljs-keyword">if</span> (jsonObject.get(<span class="hljs-string">&quot;data&quot;</span>) != <span class="hljs-literal">null</span>) &#123;<br>                        jsonObject.put(<span class="hljs-string">&quot;data&quot;</span>, jsonObject.getJSONObject(<span class="hljs-string">&quot;data&quot;</span>));<br>                    &#125;<br>                    <span class="hljs-type">ServerStandardLog</span> <span class="hljs-variable">serverStandardLog</span> <span class="hljs-operator">=</span><br>                            JSON.parseObject(jsonObject.toJSONString(), ServerStandardLog.class);<br>                    <span class="hljs-keyword">return</span> serverStandardLog;<br>    <br>                &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;<br>                    LOG.error(<span class="hljs-string">&quot;get log msg exception  &quot;</span>, e);<br>                    e.printStackTrace();<br>                    <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;<br>                &#125;<br>            &#125;).filter(Objects::nonNull);<br>            <span class="hljs-type">OutputFileConfig</span> <span class="hljs-variable">config</span> <span class="hljs-operator">=</span><br>                    OutputFileConfig.builder().withPartSuffix(<span class="hljs-string">&quot;.&quot;</span> + topic.trim() + <span class="hljs-string">&quot;.snappy.parquet&quot;</span>).build();<br>    <br>            StreamingFileSink&lt;ServerStandardLog&gt; sink = StreamingFileSink<br>                                                         .forBulkFormat(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Path</span>(<span class="hljs-string">&quot;hdfs://&quot;</span> + location),<br>                                                                 ParquetAvroWriters.forReflectRecord(ServerStandardLog.class,<br>                                                                         CompressionCodecName.SNAPPY))<br>                                                         .withBucketAssigner(<span class="hljs-keyword">new</span> <span class="hljs-title class_">CommonEventTimeBucketAssigner</span>&lt;&gt;(<span class="hljs-string">&quot;dt=0%s%s&quot;</span>,<br>                                                                 e-&gt; e.getReqTime()))<br>                                                         .withOutputFileConfig(config).build();<br>    <br>            <span class="hljs-keyword">if</span>(!<span class="hljs-string">&quot;dev&quot;</span>.equals(Config.getProfile()))&#123;<br>                rowLog.addSink(sink);<br>            &#125;<span class="hljs-keyword">else</span>&#123;<br>                rowLog.print();<br>            &#125;<br>    <br>            env.execute(<span class="hljs-string">&quot;server_log_to_hdfs_dwd_&quot;</span>+topic);<br>        &#125;<br>    &#125;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">BaseEnv</span> &#123;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> StreamExecutionEnvironment <span class="hljs-title function_">getStreamEnv</span><span class="hljs-params">(<span class="hljs-type">int</span> checkpointTime, String checkpointPath)</span> &#123;<br>        <span class="hljs-type">StreamExecutionEnvironment</span> <span class="hljs-variable">env</span> <span class="hljs-operator">=</span> StreamExecutionEnvironment.getExecutionEnvironment();<br>        env.enableCheckpointing(checkpointTime * <span class="hljs-number">60</span> * <span class="hljs-number">1000</span>, CheckpointingMode.EXACTLY_ONCE);<br>        env.getCheckpointConfig().setMaxConcurrentCheckpoints(<span class="hljs-number">1</span>);<br>        env.getCheckpointConfig().setMinPauseBetweenCheckpoints(<span class="hljs-number">500</span>);<br>        env.getCheckpointConfig().setCheckpointTimeout(checkpointTime * <span class="hljs-number">2</span> * <span class="hljs-number">60</span> * <span class="hljs-number">1000</span>);<br><br>        <span class="hljs-keyword">if</span> (!<span class="hljs-string">&quot;dev&quot;</span>.equals(Config.getProfile())) &#123;<br>            <span class="hljs-type">FsStateBackend</span> <span class="hljs-variable">fsStateBackend</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">FsStateBackend</span>(<span class="hljs-string">&quot;hdfs://&quot;</span> + checkpointPath);<br>            <span class="hljs-type">StateBackend</span> <span class="hljs-variable">rocksDBBackend</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">RocksDBStateBackend</span>(fsStateBackend, TernaryBoolean.TRUE);<br>            env.setStateBackend(rocksDBBackend);<br>            env.setRestartStrategy(RestartStrategies.fixedDelayRestart(<span class="hljs-number">2</span>, Time.minutes(<span class="hljs-number">3</span>)));<br><span class="hljs-comment">//            env.setRestartStrategy(RestartStrategies.noRestart());</span><br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-type">StateBackend</span> <span class="hljs-variable">fsStateBackend</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">FsStateBackend</span>(<span class="hljs-string">&quot;file://&quot;</span> + checkpointPath);<br>            env.setStateBackend(fsStateBackend);<br>            env.setRestartStrategy(RestartStrategies.noRestart());<br>        &#125;<br><br>        env.getCheckpointConfig()<br>                .enableExternalizedCheckpoints(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);<br><br>        <span class="hljs-keyword">return</span> env;<br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+</li>
+<li><p>JavaBean </p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs java"><br><span class="hljs-meta">@Data</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">ServerStandardLog</span> &#123;<br>    <span class="hljs-keyword">private</span> String logId=<span class="hljs-string">&quot;&quot;</span>;<br>    <span class="hljs-keyword">private</span> String bline=<span class="hljs-string">&quot;&quot;</span>;<br>    <span class="hljs-keyword">private</span> String pline=<span class="hljs-string">&quot;&quot;</span>;<br>    <span class="hljs-keyword">private</span> Long reqTime;<br>    <span class="hljs-keyword">private</span> String ip=<span class="hljs-string">&quot;&quot;</span>;<br>    <span class="hljs-keyword">private</span> String country=<span class="hljs-string">&quot;&quot;</span>;<br>    <span class="hljs-keyword">private</span> String province=<span class="hljs-string">&quot;&quot;</span>;<br>    <span class="hljs-keyword">private</span> String city=<span class="hljs-string">&quot;&quot;</span>;<br>    <span class="hljs-keyword">private</span> String uid=<span class="hljs-string">&quot;&quot;</span>;<br>    <span class="hljs-keyword">private</span> String ua=<span class="hljs-string">&quot;&quot;</span>;<br>    <span class="hljs-keyword">private</span> String imei=<span class="hljs-string">&quot;&quot;</span>;<br>    <span class="hljs-keyword">private</span> String imsi=<span class="hljs-string">&quot;&quot;</span>;<br>    <span class="hljs-keyword">private</span> String idfa=<span class="hljs-string">&quot;&quot;</span>;<br>    <span class="hljs-keyword">private</span> String idfv=<span class="hljs-string">&quot;&quot;</span>;<br>    <span class="hljs-keyword">private</span> String key=<span class="hljs-string">&quot;&quot;</span>;<br>    <span class="hljs-keyword">private</span> String subKey=<span class="hljs-string">&quot;&quot;</span>;<br>    <span class="hljs-keyword">private</span> Map&lt;String,String&gt; data = <span class="hljs-keyword">new</span> <span class="hljs-title class_">HashMap</span>&lt;&gt;();<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">ServerStandardLog</span><span class="hljs-params">()</span> &#123;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure></li>
+</ul>
+<h1 id="总结和问题"><a href="#总结和问题" class="headerlink" title="总结和问题"></a>总结和问题</h1><ul>
+<li>使用flink-Streaming写入时,对map类型支持.</li>
+<li>sink并行度不为1时,且多个topic往同一个目录写入时,需将sink文件名命名为不同的,否则会造成冲突,目前以topic区分,最好的方式可设置为随机数或uuid.</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flink/" class="category-chain-item">Flink</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Flink Streaming Write HDFS(parquet)</div>
+      <div>https://e-miao.github.io/flink/2020-11-01-FlinkStreamingWriteHdfs/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>e-miao</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2020年11月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/flink/2020-12-01-FlinkStreamingWriteHiveTable/" title="Flink Streaming Write Hive Table">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Flink Streaming Write Hive Table</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/flink/2020-05-12-Flink%20SQL%20%E8%B0%83%E7%A0%94%E5%AE%9E%E8%B7%B5%E6%80%BB%E7%BB%93/" title="Flink SQL 调研实践总结">
+                        <span class="hidden-mobile">Flink SQL 调研实践总结</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"e-miao/blog-comments","repo-id":"R_kgDOJKc4zQ","category":"Announcements","category-id":"DIC_kwDOJKc4zc4CU61N","theme-light":"light","theme-dark":"dark","mapping":"og:title","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

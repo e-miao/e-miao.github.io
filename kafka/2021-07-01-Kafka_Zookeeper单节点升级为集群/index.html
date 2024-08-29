@@ -1,0 +1,714 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/lxz_head.png">
+  <link rel="icon" href="/img/lxz_head.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="e-miao">
+  <meta name="keywords" content="Zookeeper Kafka Standlone Cluster-Mode">
+  
+    <meta name="description" content="Zookeeper,Kafka upgrade from standlone to cluster mode">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Zookeeper_Kafka单节点模式升级为集群模式">
+<meta property="og:url" content="https://e-miao.github.io/kafka/2021-07-01-Kafka_Zookeeper%E5%8D%95%E8%8A%82%E7%82%B9%E5%8D%87%E7%BA%A7%E4%B8%BA%E9%9B%86%E7%BE%A4/index.html">
+<meta property="og:site_name" content="e-miao">
+<meta property="og:description" content="Zookeeper,Kafka upgrade from standlone to cluster mode">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://e-miao.github.io/img/logo/kafka.png">
+<meta property="article:published_time" content="2021-07-01T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-07-01T00:00:00.000Z">
+<meta property="article:author" content="e-miao">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://e-miao.github.io/img/logo/kafka.png">
+  
+  
+  
+  <title>Zookeeper_Kafka单节点模式升级为集群模式 - e-miao</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"e-miao.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="e-miao" type="application/atom+xml">
+</head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>e-miao</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/friends/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Zookeeper_Kafka单节点模式升级为集群模式"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-07-01 00:00" pubdate>
+          2021年7月1日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          13 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Zookeeper_Kafka单节点模式升级为集群模式</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h1><p>目前集群中zk,kafka为单节点模式（standlone），flume上传数据到kafka中，kafka依赖zk，flink相关任务消费kafka数据。<br>将zk和kafka升级为集群模式时，最好将flume停止和flink相关任务停止。<br>且最后升级完成后，需要对zk和kafka进行测试。<br>需要将kafka中的topic重新分配到不同broker中，然后再启动Flume，观察每个broker中的流量。<br>最后再启动Flink任务。观察消费流量。（升级过程中开启kafka的JMX端口进行流量查看）</p>
+<h1 id="1-增加zk节点"><a href="#1-增加zk节点" class="headerlink" title="1. 增加zk节点"></a>1. 增加zk节点</h1><p><strong>1.1  将现有节点停止，编辑配置文件zoo.cfg，将其设为集群模式。</strong></p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs yml"><span class="hljs-string">dataDir=/home/elex/zookeeper/data</span><br><span class="hljs-string">dataLogDir=/home/elex/zookeeper/log</span><br><span class="hljs-comment"># the port at which the clients will connect</span><br><span class="hljs-string">clientPort=2181</span><br><span class="hljs-comment">#admin.serverPort=8888</span><br><span class="hljs-string">server.1=127.0.0.1:2287:3387</span><br><span class="hljs-string">server.2=127.0.0.1:2288:3388</span><br><span class="hljs-string">server.3=127.0.0.1:2289:3389</span><br><br><span class="hljs-comment">#线上时：------------------------------------------</span><br><br><span class="hljs-string">dataDir=/home/elex/zookeeper/data</span><br><span class="hljs-string">dataLogDir=/home/elex/zookeeper/log</span><br><span class="hljs-comment"># the port at which the clients will connect</span><br><span class="hljs-string">clientPort=2181</span><br><span class="hljs-string">server.1=ip1:2288:3388</span><br><span class="hljs-string">server.2=ip2:2288:3388</span><br><span class="hljs-string">server.3=ip3:2288:3388</span><br><br></code></pre></td></tr></table></figure>
+<p><strong>1.2 添加新节点。配置 myid文件</strong><br>同步主节点zookeeper目录到其他节点。修改myid文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># dataDir,dataLogDir目录</span><br><span class="hljs-built_in">mkdir</span> -p /home/elex/zookeeper/data<br><span class="hljs-built_in">mkdir</span> -p /home/elex/zookeeper/log<br><span class="hljs-comment">#在节点1，2，3上分别执行 myid中值记得都不同，和server.x保持一致。</span><br><span class="hljs-built_in">echo</span> 1 &gt; /home/elex/zookeeper/data/myid<br></code></pre></td></tr></table></figure>
+
+<p><strong>1.3 增加完新节后，启动集群，分别到每个节点启动</strong><br>后期考虑写脚本一件启停。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">./bin/zkServer.sh start conf/zoo.cfg<br><br>./bin/zkServer.sh status<br><br><span class="hljs-comment">#全部启动后，可以停止leader看，是否其他节点可以主动选举为新的leader</span><br>./bin/zkServer.sh stop<br></code></pre></td></tr></table></figure>
+
+<h1 id="2-增加kafka节点"><a href="#2-增加kafka节点" class="headerlink" title="2.增加kafka节点"></a>2.增加kafka节点</h1><p>(以下配置为测试环境，单机模拟集群模式，线上环境需要换上真实ip和端口)<br><strong>2.1 修改现有kafka节点，将其设为集群模式（如果已经为集群模式，跳过）。</strong></p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs yml"><span class="hljs-comment">#broker.id每个节点不一样，记得修改</span><br><span class="hljs-string">broker.id=0</span><br><span class="hljs-comment">#数据目录，记得改为真实的数据目录。</span><br><span class="hljs-string">log.dirs=/home/test1/kafkalog,/home/test2/kafkalog</span><br><span class="hljs-comment">#zk地址改成zk的集群地址</span><br><span class="hljs-string">zookeeper.connect=10.0.3.151:2181,10.0.3.151:2182,10.0.3.151:2183</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>2.2 增加新的kafka节点</strong> <strong>broker.id不能重复</strong><br>将kafka目录拷贝到其他节点，然后删除新加节点的dataDir和dataLogDir。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs bash">scp kafka root@ip1:xxx<br><span class="hljs-built_in">cd</span> kafka <br><span class="hljs-built_in">rm</span> -rf data/*<br><span class="hljs-built_in">rm</span> -rf <span class="hljs-built_in">log</span>/*<br><span class="hljs-comment"># 修改 </span><br>vim conf/server.properties<br>broker.id=1<br>broker.id=2<br><span class="hljs-comment">#根据新节点的实际IP和目录修改</span><br>listeners=PLAINTEXT://10.0.3.151:9092<br>zookeeper.connect=10.0.3.151:2181,10.0.3.151:2182,10.0.3.151:2183<br>log.dirs=/home/test1/kafkalog,/home/test2/kafkalog<br></code></pre></td></tr></table></figure>
+<p>增加完成后，启动每一个节点的kafka进程,并启用JMX监控</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">env</span> JMX_PORT=9999 bin/kafka-server-start.sh -daemon ./config/server.properties &amp;<br><span class="hljs-comment"># 或者 修改kafka-run-class.sh脚本，第一行增加JMX_PORT=9988开启监控。</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>2.3将现有的topic分配到不同的broker中。</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash">vim event-topic.json<br><span class="hljs-built_in">cat</span> &lt;&lt; <span class="hljs-string">EOF &gt; event-topic.json</span><br><span class="hljs-string">&#123;&quot;topics&quot;:  [&#123;&quot;topic&quot;: &quot;event&quot;&#125;],</span><br><span class="hljs-string">&quot;version&quot;:1</span><br><span class="hljs-string">&#125;</span><br><span class="hljs-string"></span><br><span class="hljs-string">EOF</span><br><br></code></pre></td></tr></table></figure>
+<p><strong>注意： 后期增加的topic不用指定，会自动分配到不同的broker中。</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 查看当前topic分布</span><br>./bin/kafka-topics.sh --describe --zookeeper 10.0.3.151:2181 --topic event<br>Topic: event    PartitionCount: 3       ReplicationFactor: 1    Configs: <br>        Topic: event    Partition: 0    Leader: 0       Replicas: 0     Isr: 0<br>        Topic: event    Partition: 1    Leader: 1       Replicas: 0     Isr: 1<br>        Topic: event    Partition: 2    Leader: 2       Replicas: 0     Isr: 2<br><br><span class="hljs-comment"># 生成计划</span><br>./bin/kafka-reassign-partitions.sh --zookeeper 10.0.3.151:2181  --topics-to-move-json-file event-topic.json --broker-list <span class="hljs-string">&quot;0,1,2&quot;</span> --generate<br>Current partition replica assignment<br>&#123;<span class="hljs-string">&quot;version&quot;</span>:1,<span class="hljs-string">&quot;partitions&quot;</span>:[&#123;<span class="hljs-string">&quot;topic&quot;</span>:<span class="hljs-string">&quot;event&quot;</span>,<span class="hljs-string">&quot;partition&quot;</span>:2,<span class="hljs-string">&quot;replicas&quot;</span>:[0],<span class="hljs-string">&quot;log_dirs&quot;</span>:[<span class="hljs-string">&quot;any&quot;</span>]&#125;,&#123;<span class="hljs-string">&quot;topic&quot;</span>:<span class="hljs-string">&quot;event&quot;</span>,<span class="hljs-string">&quot;partition&quot;</span>:1,<span class="hljs-string">&quot;replicas&quot;</span>:[0],<span class="hljs-string">&quot;log_dirs&quot;</span>:[<span class="hljs-string">&quot;any&quot;</span>]&#125;,&#123;<span class="hljs-string">&quot;topic&quot;</span>:<span class="hljs-string">&quot;event&quot;</span>,<span class="hljs-string">&quot;partition&quot;</span>:0,<span class="hljs-string">&quot;replicas&quot;</span>:[0],<span class="hljs-string">&quot;log_dirs&quot;</span>:[<span class="hljs-string">&quot;any&quot;</span>]&#125;]&#125;<br><br>Proposed partition reassignment configuration<br><span class="hljs-comment">#将这部分信息 得到一个  event-move.json 文件用于执行计划</span><br>&#123;<span class="hljs-string">&quot;version&quot;</span>:1,<span class="hljs-string">&quot;partitions&quot;</span>:[&#123;<span class="hljs-string">&quot;topic&quot;</span>:<span class="hljs-string">&quot;event&quot;</span>,<span class="hljs-string">&quot;partition&quot;</span>:0,<span class="hljs-string">&quot;replicas&quot;</span>:[1],<span class="hljs-string">&quot;log_dirs&quot;</span>:[<span class="hljs-string">&quot;any&quot;</span>]&#125;,&#123;<span class="hljs-string">&quot;topic&quot;</span>:<span class="hljs-string">&quot;event&quot;</span>,<span class="hljs-string">&quot;partition&quot;</span>:2,<span class="hljs-string">&quot;replicas&quot;</span>:[0],<span class="hljs-string">&quot;log_dirs&quot;</span>:[<span class="hljs-string">&quot;any&quot;</span>]&#125;,&#123;<span class="hljs-string">&quot;topic&quot;</span>:<span class="hljs-string">&quot;event&quot;</span>,<span class="hljs-string">&quot;partition&quot;</span>:1,<span class="hljs-string">&quot;replicas&quot;</span>:[2],<span class="hljs-string">&quot;log_dirs&quot;</span>:[<span class="hljs-string">&quot;any&quot;</span>]&#125;]&#125;<br><br><span class="hljs-comment">#执行计划</span><br>./bin/kafka-reassign-partitions.sh --zookeeper 10.0.3.151:2181 --reassignment-json-file event-move.json --execute<br><br>Current partition replica assignment<br>                                                                                                <br>&#123;<span class="hljs-string">&quot;version&quot;</span>:1,<span class="hljs-string">&quot;partitions&quot;</span>:[&#123;<span class="hljs-string">&quot;topic&quot;</span>:<span class="hljs-string">&quot;event&quot;</span>,<span class="hljs-string">&quot;partition&quot;</span>:2,<span class="hljs-string">&quot;replicas&quot;</span>:[0],<span class="hljs-string">&quot;log_dirs&quot;</span>:[<span class="hljs-string">&quot;any&quot;</span>]&#125;,&#123;<span class="hljs-string">&quot;topic&quot;</span>:<span class="hljs-string">&quot;event&quot;</span>,<span class="hljs-string">&quot;partition&quot;</span>:1,<span class="hljs-string">&quot;replicas&quot;</span>:[0],<span class="hljs-string">&quot;log_dirs&quot;</span>:[<span class="hljs-string">&quot;any&quot;</span>]&#125;,&#123;<span class="hljs-string">&quot;topic&quot;</span>:<span class="hljs-string">&quot;event&quot;</span>,<span class="hljs-string">&quot;partition&quot;</span>:0,<span class="hljs-string">&quot;repl</span><br><span class="hljs-string">icas&quot;</span>:[0],<span class="hljs-string">&quot;log_dirs&quot;</span>:[<span class="hljs-string">&quot;any&quot;</span>]&#125;]&#125;   <br>                                                                                                <br>Save this to use as the --reassignment-json-file option during rollback<br>Successfully started reassignment of partitions.<br><br><span class="hljs-comment">#校验执行计划</span><br>./bin/kafka-reassign-partitions.sh --zookeeper 10.0.3.151:2181 --reassignment-json-file event-move.json  --verify<br>Status of partition reassignment: <br>Reassignment of partition event-2 completed successfully<br>Reassignment of partition event-1 completed successfully<br>Reassignment of partition event-0 completed successfully<br><br><span class="hljs-comment">#再次查看，分区分布在不同的broker上了</span><br>./bin/kafka-topics.sh --describe --zookeeper 10.0.3.151:2181 --topic event<br><br>Topic: event    PartitionCount: 3       ReplicationFactor: 1    Configs: <br>    Topic: event    Partition: 0    Leader: 0       Replicas: 0     Isr: 0<br>    Topic: event    Partition: 1    Leader: 1       Replicas: 1     Isr: 1<br>    Topic: event    Partition: 2    Leader: 2       Replicas: 2     Isr: 2<br><br></code></pre></td></tr></table></figure>
+<ul>
+<li>kafka迁移校验<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">./bin/kafka-reassign-partitions.sh --zookeeper 10.0.3.151:2181 --reassignment-json-file event-move.json  --verify<br><span class="hljs-comment">#输出</span><br>Status of partition reassignment: <br>Reassignment of partition event-2 completed successfully<br>Reassignment of partition event-1 completed successfully<br>Reassignment of partition event-0 completed successfully<br></code></pre></td></tr></table></figure>
+<strong>注意： 在执行kafka迁移计划验证时，视topic数据量大小，可能需要很长时间。</strong><br>需要等待结果：Reassignment of xxx completed successfully均为Sucessfully才算完成，<br>如果有Progress的，需要等待。<br>上线环境时，数据量过大，topic数量也比较多，等待了大约2个小时。</li>
+</ul>
+<p><strong>2.4 增加topic分区</strong>（若后期数据量过大，效率低的情况再酌情增加分区）</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">./bin/kafka-topics.sh --zookeeper zk01:2181,zk02:2181,zk03:2181 --alter --topic track_pc --partitions 3<br><span class="hljs-comment"># 或使用kafka-manager进行修改</span><br><br></code></pre></td></tr></table></figure>
+
+<h1 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h1><ol>
+<li><p>项目经验之Kafka机器数量计算<br> Kafka机器数量（经验公式）&#x3D;2<em>（峰值生产速度</em>副本数&#x2F;100）+1</p>
+<p> 峰值生产速度，再根据设定的副本数，就能预估出需要部署Kafka的数量。<br> 比如我们的峰值生产速度是50M&#x2F;s。副本数为2。<br> Kafka机器数量&#x3D;2<em>（50</em>2&#x2F;100）+ 1&#x3D;3台</p>
+</li>
+<li><p>项目经验值Kafka分区数计算<br> 创建一个只有1个分区的topic<br> 测试这个topic的producer吞吐量和consumer吞吐量。<br> 假设他们的值分别是Tp和Tc，单位可以是MB&#x2F;s。<br> 然后假设总的目标吞吐量是Tt，那么分区数&#x3D;Tt &#x2F; min（Tp，Tc）</p>
+</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Kafka/" class="category-chain-item">Kafka</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/Kafka/Zookeeper/" class="category-chain-item">Zookeeper</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Zookeeper_Kafka单节点模式升级为集群模式</div>
+      <div>https://e-miao.github.io/kafka/2021-07-01-Kafka_Zookeeper单节点升级为集群/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>e-miao</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年7月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/datasource/2021-07-06-%E5%88%A9%E7%94%A8logstash%E8%BF%81%E7%A7%BBMySQL%E6%95%B0%E6%8D%AE%E8%87%B3Elasticsearch/" title="利用logstash迁移MySQL数据至Elasticsearch">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">利用logstash迁移MySQL数据至Elasticsearch</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/flink/2021-06-27-Flink-Checkpoint-AWS-S3/" title="Flink Checkpoint AWS S3中">
+                        <span class="hidden-mobile">Flink Checkpoint AWS S3中</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"e-miao/blog-comments","repo-id":"R_kgDOJKc4zQ","category":"Announcements","category-id":"DIC_kwDOJKc4zc4CU61N","theme-light":"light","theme-dark":"dark","mapping":"og:title","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

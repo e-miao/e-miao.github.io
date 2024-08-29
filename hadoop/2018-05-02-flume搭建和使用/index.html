@@ -1,0 +1,707 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/lxz_head.png">
+  <link rel="icon" href="/img/lxz_head.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="e-miao">
+  <meta name="keywords" content="flume搭建, flume使用">
+  
+    <meta name="description" content="flume的搭建和简单使用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="flume的搭建和简单使用">
+<meta property="og:url" content="https://e-miao.github.io/hadoop/2018-05-02-flume%E6%90%AD%E5%BB%BA%E5%92%8C%E4%BD%BF%E7%94%A8/index.html">
+<meta property="og:site_name" content="e-miao">
+<meta property="og:description" content="flume的搭建和简单使用">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://stone-upyun.b0.aicdn.com/blog20180502120225.png!700x999">
+<meta property="og:image" content="https://stone-upyun.b0.aicdn.com/blog20180502120550.png!700x999">
+<meta property="og:image" content="https://stone-upyun.b0.aicdn.com/blog20180502120652.png!700x999">
+<meta property="og:image" content="https://stone-upyun.b0.aicdn.com/blog20180502120712.png!700x999">
+<meta property="article:published_time" content="2018-05-02T00:00:00.000Z">
+<meta property="article:modified_time" content="2018-05-02T00:00:00.000Z">
+<meta property="article:author" content="e-miao">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://stone-upyun.b0.aicdn.com/blog20180502120225.png!700x999">
+  
+  
+  
+  <title>flume的搭建和简单使用 - e-miao</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"e-miao.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="e-miao" type="application/atom+xml">
+</head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>e-miao</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/friends/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="flume的搭建和简单使用"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2018-05-02 00:00" pubdate>
+          2018年5月2日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          10 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">flume的搭建和简单使用</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="flume-简介"><a href="#flume-简介" class="headerlink" title="flume 简介:"></a>flume 简介:</h3><ul>
+<li>百度百科:<br><br>  Flume是Cloudera提供的一个高可用的，高可靠的，分布式的海量日志采集、聚合和传输的系统，Flume支持在日志系统中定制各类数据发送方，用于收集数据；同时，Flume提供对数据进行简单处理，并写到各种数据接受方（可定制）的能力。<br>  当前Flume有两个版本Flume 0.9X版本的统称Flume-og，Flume1.X版本的统称Flume-ng。由于Flume-ng经过重大重构，与Flume-og有很大不同，使用时请注意区分。</li>
+<li>简介2<br><ol>
+<li>Flume 提供一个分布式的，可靠的，对大数据量的日志进行高效收集、聚集、移动的服务， Flume 只能在 Unix 环境下运行。<br></li>
+<li>Flume 基于流式架构，容错性强，也很灵活简单。<br></li>
+<li>Flume、Kafka 用来实时进行数据收集，Spark、Storm 用来实时处理数据，impala 用来实 时查询。<br></li>
+</ol>
+</li>
+</ul>
+<hr>
+<h3 id="模式"><a href="#模式" class="headerlink" title="模式"></a>模式</h3><p>参考<a target="_blank" rel="noopener" href="http://flume.apache.org/FlumeUserGuide.html">官文文档</a><br><br>模式一:单输入单输出 <br><br>    <img src="https://stone-upyun.b0.aicdn.com/blog20180502120225.png!700x999" srcset="/img/loading.gif" lazyload></p>
+<p>模式二:多flume连接<br>    <img src="https://stone-upyun.b0.aicdn.com/blog20180502120550.png!700x999" srcset="/img/loading.gif" lazyload></p>
+<p>模式三:多输入汇总<br>    <img src="https://stone-upyun.b0.aicdn.com/blog20180502120652.png!700x999" srcset="/img/loading.gif" lazyload></p>
+<p>模式四:多输出分发<br>    <img src="https://stone-upyun.b0.aicdn.com/blog20180502120712.png!700x999" srcset="/img/loading.gif" lazyload></p>
+<hr>
+<h3 id="Flume-角色"><a href="#Flume-角色" class="headerlink" title="Flume 角色"></a>Flume 角色<br></h3><ul>
+<li>1、Source <br><br>  用于采集数据，Source 是产生数据流的地方，同时 Source 会将产生的数据流传输到 Channel，<br>  这个有点类似于 Java IO 部分的 Channel。<br></li>
+<li>2、Channel<br><br>  用于桥接 Sources 和 Sinks，类似于一个队列。<br></li>
+<li>3、Sink<br><br>  从 Channel 收集数据，将数据写到目标源(可以是下一个 Source，也可以是 HDFS 或者 HBase)。</li>
+<li>4、Event<br><br>  传输单元，Flume 数据传输的基本单元，以事件的形式将数据从源头送至目的地</li>
+</ul>
+<h3 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h3><p>下载官方对应的安装包,解压<br><br>修改 conf&#x2F;flume-env.sh 文件中JAVA_HOME即可使用<br><br>本文使用的版本:1.7.0 下载地址: <a target="_blank" rel="noopener" href="http://archive.apache.org/dist/flume/">官方下载地址</a></p>
+<h3 id="遇到的问题"><a href="#遇到的问题" class="headerlink" title="遇到的问题:"></a>遇到的问题:</h3><p>在flume中配置两个sink输出到指定两端口,然后用两个soureces去接受这两个sink传递过来的值,,最终将之前其中一个sink的发送的数据放到hdfs,另一个数据放到本地磁盘.但是放到本地磁盘的那份数据,只有目录和文件,数据没有,放到hdfs上的有数据<br><br>第一个flume的配置</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-comment"># 讲一个source 分发给多个chanel-对应多个sink，给下一个相应的flume</span><br><span class="hljs-attr">a1.sources</span> = r1<br><span class="hljs-attr">a1.channels</span> = c1 c2<br><span class="hljs-attr">a1.sinks</span> = k1 k2<br><br><span class="hljs-comment"># 将数据复制给多个channel</span><br><span class="hljs-attr">a1.sources.r1.selector.type</span> = replicating<br><br><span class="hljs-comment"># sources 设置</span><br><span class="hljs-attr">a1.sources.r1.type</span> = exec<br><span class="hljs-attr">a1.sources.r1.command</span> = tail -F /home/admin/module/hive-<span class="hljs-number">1.2</span>.<span class="hljs-number">2</span>/logs/hive.log<br><span class="hljs-attr">a1.sources.r1.shell</span> = /bin/bash -c<br><br><span class="hljs-comment">#channels 设置</span><br><span class="hljs-comment"># Use a channel which buffers events in memory</span><br><span class="hljs-attr">a1.channels.c1.type</span> = memory<br><span class="hljs-attr">a1.channels.c1.capacity</span> = <span class="hljs-number">1000</span><br><span class="hljs-attr">a1.channels.c1.transactionCapacity</span> = <span class="hljs-number">100</span><br><br><span class="hljs-attr">a1.channels.c2.type</span> = memory<br><span class="hljs-attr">a1.channels.c2.capacity</span> = <span class="hljs-number">1000</span><br><span class="hljs-attr">a1.channels.c2.transactionCapacity</span> = <span class="hljs-number">100</span><br><br><span class="hljs-comment"># sinks 设置</span><br><span class="hljs-attr">a1.sinks.k2.type</span> = avro<br><span class="hljs-attr">a1.sinks.k2.hostname</span> = hd001<br><span class="hljs-attr">a1.sinks.k2.port</span> = <span class="hljs-number">8088</span><br><span class="hljs-attr">a1.sinks.k1.type</span> = avro<br><span class="hljs-attr">a1.sinks.k1.hostname</span> = hd001<br><span class="hljs-attr">a1.sinks.k1.port</span> = <span class="hljs-number">8089</span>  <br></code></pre></td></tr></table></figure>
+
+<p>第二个flume的配置</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-comment">#接受上一个flume 的sink的结果# 定义服务</span><br><span class="hljs-attr">a2.sources</span> = r1<br><span class="hljs-attr">a2.channels</span> = c1<br><span class="hljs-attr">a2.sinks</span> = k1<br><br><span class="hljs-comment"># source 设置</span><br><span class="hljs-attr">a2.sources.r1.type</span> = avro<br><span class="hljs-attr">a2.sources.r1.bind</span> = hd001<br><span class="hljs-attr">a2.sources.r1.port</span> = <span class="hljs-number">8089</span><br><br><span class="hljs-comment"># sink 设置</span><br><span class="hljs-attr">a2.sinks.k1.type</span> = hdfs<br><span class="hljs-attr">a2.sinks.k1.hdfs.path</span> = hdfs://<span class="hljs-number">192.168</span>.<span class="hljs-number">1.20</span>:<span class="hljs-number">9000</span>/flume4/manysinks/%Y%m%d/%H<br><span class="hljs-comment">#上传文件的前缀</span><br><span class="hljs-attr">a2.sinks.k1.hdfs.filePrefix</span> = upload2-<br><span class="hljs-comment">#是否按照时间滚动文件夹</span><br><span class="hljs-attr">a2.sinks.k1.hdfs.round</span> = <span class="hljs-literal">true</span><br><span class="hljs-comment">#多少时间单位创建一个新的文件夹</span><br><span class="hljs-attr">a2.sinks.k1.hdfs.roundValue</span> = <span class="hljs-number">1</span><br><span class="hljs-comment">#重新定义时间单位</span><br><span class="hljs-attr">a2.sinks.k1.hdfs.roundUnit</span> = hour<br><span class="hljs-comment">#是否使用本地时间戳</span><br><span class="hljs-attr">a2.sinks.k1.hdfs.useLocalTimeStamp</span> = <span class="hljs-literal">true</span><br><span class="hljs-comment">#积攒多少个Event才flush到HDFS一次</span><br><span class="hljs-attr">a2.sinks.k1.hdfs.batchSize</span> = <span class="hljs-number">1000</span><br><span class="hljs-comment">#设置文件类型，可支持压缩</span><br><span class="hljs-attr">a2.sinks.k1.hdfs.fileType</span> = DataStream<br><span class="hljs-comment">#多久生成一个新的文件</span><br><span class="hljs-attr">a2.sinks.k1.hdfs.rollInterval</span> = <span class="hljs-number">600</span><br><span class="hljs-comment">#设置每个文件的滚动大小</span><br><span class="hljs-attr">a2.sinks.k1.hdfs.rollSize</span> = <span class="hljs-number">134217700</span><br><span class="hljs-comment">#文件的滚动与Event数量无关</span><br><span class="hljs-attr">a2.sinks.k1.hdfs.rollCount</span> = <span class="hljs-number">0</span><br><span class="hljs-comment">#最小冗余数</span><br><span class="hljs-attr">a2.sinks.k1.hdfs.minBlockReplicas</span> = <span class="hljs-number">1</span><br><br><br><span class="hljs-comment"># Use a channel which buffers events in memory</span><br><span class="hljs-attr">a2.channels.c1.type</span> = memory<br><span class="hljs-attr">a2.channels.c1.capacity</span> = <span class="hljs-number">1000</span><br><span class="hljs-attr">a2.channels.c1.transactionCapacity</span> = <span class="hljs-number">100</span><br><br><span class="hljs-attr">a2.sources.r1.channels</span> = c1<br><span class="hljs-attr">a2.sinks.k1.channel</span> = c1<br><br><span class="hljs-attr">a1.sources.r1.channels</span> = c1 c2<br><span class="hljs-attr">a1.sinks.k1.channel</span> = c1<br><span class="hljs-attr">a1.sinks.k2.channel</span> = c2 <br></code></pre></td></tr></table></figure>
+
+<p>第三个flume的配置  </p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-comment">#接受上一个flume 的sink的结果# 定义服务</span><br><span class="hljs-attr">a3.sources</span> = r1<br><span class="hljs-attr">a3.channels</span> = c1<br><span class="hljs-attr">a3.sinks</span> = k1<br><span class="hljs-comment"># source 设置</span><br><span class="hljs-attr">a3.sources.r1.type</span> = avro<br><span class="hljs-attr">a3.sources.r1.bind</span> = hd001<br><span class="hljs-attr">a3.sources.r1.port</span> = <span class="hljs-number">8088</span><br><span class="hljs-comment"># sink 设置</span><br><span class="hljs-attr">a3.sinks.k1.type</span> = file_roll<br><span class="hljs-attr">a3.sinks.k1.sink.directory</span> = /home/admin/tmp/flume4<br><span class="hljs-comment"># Use a channel which buffers events in memory</span><br><span class="hljs-attr">a3.channels.c1.type</span> = memory<br><span class="hljs-attr">a3.channels.c1.capacity</span> = <span class="hljs-number">100</span><br><span class="hljs-attr">a3.channels.c1.transactionCapacity</span> = <span class="hljs-number">50</span><br><br><span class="hljs-attr">a3.sources.r1.cahnnels</span> = c1<br><span class="hljs-attr">a3.sinks.k1.channel</span> = c1  <br></code></pre></td></tr></table></figure>
+<p>查看第三个flume配置中对应结果目录数据</p>
+<figure class="highlight tap"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs tap">[admin@hd001 ~]$ ll tmp/flum4/<br>总用量 0<br>-rw-rw-r--.<span class="hljs-number"> 1 </span>admin admin<span class="hljs-number"> 0 </span>5月  <span class="hljs-number"> 2 </span>11:32 1525231977673-1<br>-rw-rw-r--.<span class="hljs-number"> 1 </span>admin admin<span class="hljs-number"> 0 </span>5月  <span class="hljs-number"> 2 </span>11:37 1525231977673-10<br>-rw-rw-r--.<span class="hljs-number"> 1 </span>admin admin<span class="hljs-number"> 0 </span>5月  <span class="hljs-number"> 2 </span>11:37 1525231977673-11<br>-rw-rw-r--.<span class="hljs-number"> 1 </span>admin admin<span class="hljs-number"> 0 </span>5月  <span class="hljs-number"> 2 </span>11:38 1525231977673-12<br>-rw-rw-r--.<span class="hljs-number"> 1 </span>admin admin<span class="hljs-number"> 0 </span>5月  <span class="hljs-number"> 2 </span>11:39 1525231977673-13<br>-rw-rw-r--.<span class="hljs-number"> 1 </span>admin admin<span class="hljs-number"> 0 </span>5月  <span class="hljs-number"> 2 </span>11:39 1525231977673-14<br>-rw-rw-r--.<span class="hljs-number"> 1 </span>admin admin<span class="hljs-number"> 0 </span>5月  <span class="hljs-number"> 2 </span>11:39 1525231977673-15<br>-rw-rw-r--.<span class="hljs-number"> 1 </span>admin admin<span class="hljs-number"> 0 </span>5月  <span class="hljs-number"> 2 </span>11:40 1525231977673-16<br>-rw-rw-r--.<span class="hljs-number"> 1 </span>admin admin<span class="hljs-number"> 0 </span>5月  <span class="hljs-number"> 2 </span>11:41 1525231977673-17<br>-rw-rw-r--.<span class="hljs-number"> 1 </span>admin admin<span class="hljs-number"> 0 </span>5月  <span class="hljs-number"> 2 </span>11:41 1525231977673-18<br>-rw-rw-r--.<span class="hljs-number"> 1 </span>admin admin<span class="hljs-number"> 0 </span>5月  <span class="hljs-number"> 2 </span>11:41 1525231977673-19<br>里面的数据为0,cat * 出来也是空的,但是在第二个flume中到hdfs上的数据是有对应的hive.log日志<br><br></code></pre></td></tr></table></figure>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flume/" class="category-chain-item">Flume</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>flume的搭建和简单使用</div>
+      <div>https://e-miao.github.io/hadoop/2018-05-02-flume搭建和使用/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>e-miao</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2018年5月2日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/docker/2018-05-09-kubernetes%E6%B5%85%E5%85%A5/" title="kubernetes浅入(一)">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">kubernetes浅入(一)</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/blog/2018-04-16-%E5%8D%9A%E5%AE%A2%E5%9B%BE%E5%BA%8A%E4%B8%8A%E4%BC%A0%E5%B7%A5%E5%85%B7%E6%8E%A8%E8%8D%90/" title="博客图床上传工具推荐">
+                        <span class="hidden-mobile">博客图床上传工具推荐</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"e-miao/blog-comments","repo-id":"R_kgDOJKc4zQ","category":"Announcements","category-id":"DIC_kwDOJKc4zc4CU61N","theme-light":"light","theme-dark":"dark","mapping":"og:title","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

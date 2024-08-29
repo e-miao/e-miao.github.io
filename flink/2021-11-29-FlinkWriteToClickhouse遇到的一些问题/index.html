@@ -1,0 +1,718 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/lxz_head.png">
+  <link rel="icon" href="/img/lxz_head.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="e-miao">
+  <meta name="keywords" content="Flink Clickhouse Problems">
+  
+    <meta name="description" content="Flink Write Data to Clickhouse 遇到的一些问题.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flink Write Data to Clickhouse 遇到的一些问题.">
+<meta property="og:url" content="https://e-miao.github.io/flink/2021-11-29-FlinkWriteToClickhouse%E9%81%87%E5%88%B0%E7%9A%84%E4%B8%80%E4%BA%9B%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="e-miao">
+<meta property="og:description" content="Flink Write Data to Clickhouse 遇到的一些问题.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://e-miao.github.io/img/logo/flink_ch.png">
+<meta property="article:published_time" content="2021-11-29T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-11-29T00:00:00.000Z">
+<meta property="article:author" content="e-miao">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://e-miao.github.io/img/logo/flink_ch.png">
+  
+  
+  
+  <title>Flink Write Data to Clickhouse 遇到的一些问题. - e-miao</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"e-miao.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="e-miao" type="application/atom+xml">
+</head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>e-miao</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/friends/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Flink Write Data to Clickhouse 遇到的一些问题."></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2021-11-29 00:00" pubdate>
+          2021年11月29日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          11 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Flink Write Data to Clickhouse 遇到的一些问题.</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>由于公司业务和框架因素,目前将Clickhouse作为数仓唯一的存储选择.<br>现将一些个人在使用Flink写数据到Clickhouse遇到的一些问题做一些笔记.</p>
+<h2 id="Clickhouse简介"><a href="#Clickhouse简介" class="headerlink" title="Clickhouse简介:"></a>Clickhouse简介:</h2><p>clickhouse是列式分布式存储系统,ClickHouse是一个用于联机分析(OLAP)的列式数据库管理系统(DBMS)。<br><a target="_blank" rel="noopener" href="https://clickhouse.com/docs/zh/">官网简介</a></p>
+<h2 id="问题一-如果保证-Flink-Sink-to-Clickhouse-有效一次"><a href="#问题一-如果保证-Flink-Sink-to-Clickhouse-有效一次" class="headerlink" title="问题一: 如果保证 Flink Sink to Clickhouse 有效一次"></a>问题一: 如果保证 Flink Sink to Clickhouse 有效一次</h2><p>这个问题是刚到公司,分配给我的. 这里说一下我简单的思路和方案.<br>截至目前(2021年11月29日),前几天看到网上阿里已经实现了基于自身Clickhouse的有效一次性入库方案(类似于StreamSinkFile的二次提交)<br>但是需要结合clickhouse的源码修改才能完成</p>
+<p><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/8H2bxYUBmPzHl3Ae6WVWJg">阿里巴巴相关文档</a></p>
+<p>目前官方版本Clickhouse不具备事务.</p>
+<h3 id="解决思路"><a href="#解决思路" class="headerlink" title="解决思路"></a>解决思路</h3><ol>
+<li><p>将Clickhouse的表引擎改为:  ReplacingMergeTree (目前是MergeTree)</p>
+<ul>
+<li>优点: 满足幂等性,多次写入后数据最终能保证正确性.</li>
+<li>缺点: 当表数据很多时,ReplacingMergeTree对CPU和内存消耗很高.不适用于目前业务中.(目前业务将ods层数据都存到CH中,且是单节点.)</li>
+</ul>
+</li>
+<li><p>将kf_partition,kf_offset写入ch的表中,使topic和表一一对应.offset由kafka维护,不一致时,删除ch中多余数据.</p>
+<ul>
+<li>优点: 能基本保证数据正确性.</li>
+<li>缺点: 不能使用Flink的自动重启机制,需要每次重启时,比对CH与Kafka的对应分区offset.</li>
+<li>缺点: 当CH负载过于高时,重启任务删除数据时,不能正常删除掉.数据准确性受限于CH负载.</li>
+</ul>
+</li>
+<li><p>当任务重启时,使用kafka中的offset点直接启动任务,下一个小时通过hive或者具备事务性或幂等性的存储结构回插到CH(CH删除当前小时数据或分钟) </p>
+<ul>
+<li>优点: 能保证数据准确性</li>
+<li>缺点: 资源消耗更多(需要额外的事务性分布式存储系统或集群资源消耗,目前公司不希望使用更多资源,就是”优化”.)</li>
+<li>缺点: 当前重启小时CH中数据不够准确,需要下一个小时数据回插后数据才具备准确性.</li>
+</ul>
+</li>
+</ol>
+<p>最终使用了方案2.不要问为啥(成本控制?)</p>
+<h2 id="问题二-Clickhouse删除数据时提示-空间不足"><a href="#问题二-Clickhouse删除数据时提示-空间不足" class="headerlink" title="问题二: Clickhouse删除数据时提示 空间不足"></a>问题二: Clickhouse删除数据时提示 空间不足</h2><ol>
+<li>问题场景:</li>
+</ol>
+<p>因为问题一解决方案2是基于保持clickhouse中数据的分区和offset与kafka的分区和offset一致,<br>当任务重启(失败重启或手动重启)时,回去校验offset一致情况 .<br>如果有不一致情况会将clickhouse中多余的数据删除其实保持一致.<br>同时:<br>users.xml 设置了同步修改数据属性.(因为是单节点所以设置1.多节点和副本情况设置2)</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs xml"><span class="hljs-tag">&lt;<span class="hljs-name">mutations_sync</span>&gt;</span>1<span class="hljs-tag">&lt;/<span class="hljs-name">mutations_sync</span>&gt;</span> <br></code></pre></td></tr></table></figure>
+<p>导致了任务重启时删除多个按分区删除语句时提示空间不足:<br>日志如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><code class="hljs log">dealCkAndKfOffsetNoEqual count=[8211] ;exec-sql=[alter table  db01.test_table  delete where toDate(`logdate`)=&#x27;2021-11-30&#x27; and kf_partition=6 and kf_partition&gt;=14152053083 and kf_offset&lt;=14152061943]<br>ru.yandex.clickhouse.except.ClickHouseException: ClickHouse exception, code: 341, host: 172.34.6.84, port: 8123; Code: 341, e.displayText() = DB::Exception: Exception hap<br>pened during execution of mutation &#x27;mutation_8222580.txt&#x27; with part &#x27;20210819_662942_690500_6_8222579&#x27; reason: &#x27;Code: 243, e.displayText() = DB::Exception: Cannot reserve<br> 54.68 GiB, not enough space (version 21.8.11.4 (official build))&#x27;. This error maybe retryable or not. In case of unretryable error, mutation can be killed with KILL MUTA<br>TION query (version 21.8.11.4 (official build))<br><br>        at ru.yandex.clickhouse.except.ClickHouseExceptionSpecifier.specify(ClickHouseExceptionSpecifier.java:58)<br>        at ru.yandex.clickhouse.except.ClickHouseExceptionSpecifier.specify(ClickHouseExceptionSpecifier.java:28)<br>        at ru.yandex.clickhouse.ClickHouseStatementImpl.checkForErrorAndThrow(ClickHouseStatementImpl.java:876)<br>        at ru.yandex.clickhouse.ClickHouseStatementImpl.getInputStream(ClickHouseStatementImpl.java:616)<br>        at ru.yandex.clickhouse.ClickHouseStatementImpl.executeQuery(ClickHouseStatementImpl.java:117)<br>        at ru.yandex.clickhouse.ClickHouseStatementImpl.executeQuery(ClickHouseStatementImpl.java:100)<br>        at ru.yandex.clickhouse.ClickHouseStatementImpl.executeQuery(ClickHouseStatementImpl.java:95)<br>        at ru.yandex.clickhouse.ClickHouseStatementImpl.executeQuery(ClickHouseStatementImpl.java:90)<br>        at ru.yandex.clickhouse.ClickHouseStatementImpl.execute(ClickHouseStatementImpl.java:226)<br>        at flink_demo.utils.ClickhouseUtils.execSql(ClickhouseUtils.java:44)<br>        at flink_demo.utils.ClickhouseUtils.execSql(ClickhouseUtils.java:32)<br>        at flink_demo.utils.FlinkUtils.dealCkAndKfOffsetNoEqual(FlinkUtils.java:373)<br>        at flink_demo.FlinkWriteLogOdsCKQueue.main(FlinkWriteLogOdsCKQueue.java:52)<br>        at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)<br>        at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)<br>        at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)<br>        at java.lang.reflect.Method.invoke(Method.java:498)<br>        at org.apache.flink.client.program.PackagedProgram.callMainMethod(PackagedProgram.java:355)<br>        at org.apache.flink.client.program.PackagedProgram.invokeInteractiveModeForExecution(PackagedProgram.java:222)<br>        at org.apache.flink.client.ClientUtils.executeProgram(ClientUtils.java:114)<br>        at org.apache.flink.client.cli.CliFrontend.executeProgram(CliFrontend.java:812)<br>        at org.apache.flink.client.cli.CliFrontend.run(CliFrontend.java:246)<br>        at org.apache.flink.client.cli.CliFrontend.parseAndRun(CliFrontend.java:1054)<br>        at org.apache.flink.client.cli.CliFrontend.lambda$main$10(CliFrontend.java:1132)<br>        at java.security.AccessController.doPrivileged(Native Method)<br>        at javax.security.auth.Subject.doAs(Subject.java:422)<br>        at org.apache.hadoop.security.UserGroupInformation.doAs(UserGroupInformation.java:1730)<br>        at org.apache.flink.runtime.security.contexts.HadoopSecurityContext.runSecured(HadoopSecurityContext.java:41)<br>        at org.apache.flink.client.cli.CliFrontend.main(CliFrontend.java:1132)<br>Caused by: java.lang.Throwable: Code: 341, e.displayText() = DB::Exception: Exception happened during execution of mutation &#x27;mutation_8222580.txt&#x27; with part &#x27;20210819_662<br>942_690500_6_8222579&#x27; reason: &#x27;Code: 243, e.displayText() = DB::Exception: Cannot reserve 54.68 GiB, not enough space (version 21.8.11.4 (official build))&#x27;. This error ma<br>ybe retryable or not. In case of unretryable error, mutation can be killed with KILL MUTATION query (version 21.8.11.4 (official build))<br><br>                at ru.yandex.clickhouse.except.ClickHouseExceptionSpecifier.specify(ClickHouseExceptionSpecifier.java:53)<br>        ... 28 more<br>ru.yandex.clickhouse.except.ClickHouseException: ClickHouse exception, code: 341, host: 172.34.6.84, port: 8123; Code: 341, e.displayText() = DB::Exception: Exception hap<br>pened during execution of mutation &#x27;mutation_8222580.txt&#x27; with part &#x27;20210819_662942_690500_6_8222579&#x27; reason: &#x27;Code: 243, e.displayText() = DB::Exception: Cannot reserve<br> 54.68 GiB, not enough space (version 21.8.11.4 (official build))&#x27;. This error maybe retryable or not. In case of unretryable error, mutation can be killed with KILL MUTA<br>TION query (version 21.8.11.4 (official build))<br></code></pre></td></tr></table></figure>
+
+<p>在执行时CH内存使用较高,如图<br><img src="https://i.loli.net/2021/11/30/mnYWsLOuB35Adrj.png" srcset="/img/loading.gif" lazyload alt="内存使用图"><br>同时参考了文章: <a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1704570">https://cloud.tencent.com/developer/article/1704570</a> </p>
+<p>发现执行sql报错提示空间不足,是由因为对指定分区执行了 DELETE WHERE 条件删除，不在删除分区的分区文件，这些分区文件进入了 clone 流程,所以造成提示空间不足</p>
+<p>如有其他关键问题.后期再继续更新.</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flink/" class="category-chain-item">Flink</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/Flink/Clickhouse/" class="category-chain-item">Clickhouse</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Flink Write Data to Clickhouse 遇到的一些问题.</div>
+      <div>https://e-miao.github.io/flink/2021-11-29-FlinkWriteToClickhouse遇到的一些问题/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>e-miao</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2021年11月29日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/flink/2021-12-31-Flink-kafka%E4%BD%BF%E7%94%A8%E4%B8%AD%E9%81%87%E5%88%B0%E7%9A%84%E4%B8%80%E4%BA%9B%E9%97%AE%E9%A2%98/" title="Flink消费Kafka时遇到的一些问题汇总">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Flink消费Kafka时遇到的一些问题汇总</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/flume/2021-11-19-flume-%E4%BC%98%E5%8C%96/" title="Flume 优化">
+                        <span class="hidden-mobile">Flume 优化</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"e-miao/blog-comments","repo-id":"R_kgDOJKc4zQ","category":"Announcements","category-id":"DIC_kwDOJKc4zc4CU61N","theme-light":"light","theme-dark":"dark","mapping":"og:title","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

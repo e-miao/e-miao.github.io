@@ -1,0 +1,798 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/lxz_head.png">
+  <link rel="icon" href="/img/lxz_head.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="e-miao">
+  <meta name="keywords" content="flink on k8s run">
+  
+    <meta name="description" content="记录下flink on k8s运行的一些经验和总结.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Flink On K8S 实践分享">
+<meta property="og:url" content="https://e-miao.github.io/flink/Flink%20On%20K8S%20%E5%AE%9E%E8%B7%B5%E5%88%86%E4%BA%AB/index.html">
+<meta property="og:site_name" content="e-miao">
+<meta property="og:description" content="记录下flink on k8s运行的一些经验和总结.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://e-miao.github.io/img/logo/flink.png">
+<meta property="article:published_time" content="2023-08-06T18:25:22.000Z">
+<meta property="article:modified_time" content="2023-08-06T18:25:22.000Z">
+<meta property="article:author" content="e-miao">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://e-miao.github.io/img/logo/flink.png">
+  
+  
+  
+  <title>Flink On K8S 实践分享 - e-miao</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"e-miao.github.io","root":"/","version":"1.9.7","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.2.0"><link rel="alternate" href="/atom.xml" title="e-miao" type="application/atom+xml">
+</head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>e-miao</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/friends/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Flink On K8S 实践分享"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-08-06 18:25" pubdate>
+          2023年8月6日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          47 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Flink On K8S 实践分享</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><h2 id="各软件版本"><a href="#各软件版本" class="headerlink" title="各软件版本"></a>各软件版本</h2><ul>
+<li>k8s: 1.24.2</li>
+<li>flink: 1.14.5</li>
+<li>JDK: 1.8</li>
+<li>Hadoop: 3.0.0</li>
+</ul>
+<h2 id="K8S"><a href="#K8S" class="headerlink" title="K8S"></a>K8S</h2><p>Kubernetes是一个由谷歌开发的开源容器编排平台，用于自动化部署、扩展和管理容器化应用程序。Kubernetes旨在管理在主机集群上部署和扩展容器化应用程序时的复杂性。</p>
+<h3 id="组成部分"><a href="#组成部分" class="headerlink" title="组成部分"></a>组成部分</h3><ul>
+<li><p>Master节点：</p>
+<blockquote>
+<p>kube-apiserver（API Server）： 提供Kubernetes API，允许用户和其他组件与集群交互。所有集群操作都通过API Server进行。</p>
+</blockquote>
+<blockquote>
+<p>etcd： 分布式键值存储系统，用于存储集群的配置数据、元数据和状态。</p>
+</blockquote>
+<blockquote>
+<p>kube-scheduler： 根据资源需求和约束，将未分配的Pod（容器组）调度到合适的节点上。</p>
+</blockquote>
+<blockquote>
+<p>kube-controller-manager： 运行控制器，监控集群状态并根据期望状态进行调整。常见的控制器包括副本控制器、节点控制器、服务控制器等。</p>
+</blockquote>
+<blockquote>
+<p>cloud-controller-manager： 如果集群在云服务提供商上运行，这个组件会与云提供商的API交互，执行与云环境相关的任务。</p>
+</blockquote>
+</li>
+<li><p>Node节点：</p>
+<blockquote>
+<p>kubelet： 在每个节点上运行，负责管理容器和Pod的生命周期，确保它们在所需的状态下运行。</p>
+</blockquote>
+<blockquote>
+<p>kube-proxy： 负责为Pod设置网络代理和负载均衡规则，以实现服务发现和访问。</p>
+</blockquote>
+<blockquote>
+<p>Container Runtime： 负责运行容器，如Docker、containerd等。</p>
+</blockquote>
+</li>
+<li><p>其他关键组件：</p>
+<blockquote>
+<p>Pod： 一个或多个容器的组合，它们共享网络和存储，是Kubernetes的最小部署单位。</p>
+</blockquote>
+<blockquote>
+<p>Deployment： 控制器的一种，用于声明性地定义Pod的部署方式，支持滚动更新和回滚。</p>
+</blockquote>
+<blockquote>
+<p>Service： 用于公开Pod组成的应用程序，为其提供稳定的网络地址，实现负载均衡和服务发现。</p>
+</blockquote>
+<blockquote>
+<p>Namespace： 用于将集群内的资源划分为不同的虚拟组，以帮助管理和隔离。</p>
+</blockquote>
+<blockquote>
+<p>ConfigMap和Secret： 用于将配置信息和敏感信息（如密码、证书）与Pod分开，实现配置的分离和安全性。</p>
+</blockquote>
+<blockquote>
+<p>Volume： 提供容器级别的持久性存储，以便数据在容器之间和容器重启之间持久保存。</p>
+</blockquote>
+<blockquote>
+<p>Ingress： 允许外部流量进入集群，将请求路由到相应的服务和Pod。</p>
+</blockquote>
+<blockquote>
+<p>StatefulSet： 用于管理有状态应用程序的控制器，确保有状态应用程序的有序部署、伸缩和更新。</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="关键特性"><a href="#关键特性" class="headerlink" title="关键特性"></a>关键特性</h3><ul>
+<li><p>容器编排： Kubernetes管理容器，这些容器是将应用程序及其依赖项打包在一起的隔离环境。它确保容器按照用户定义的规范运行、保持健康，并根据需要进行扩展。</p>
+</li>
+<li><p>自动扩展： Kubernetes可以根据资源使用情况或定义的规则自动扩展容器的数量。这确保了最佳性能和资源利用。</p>
+</li>
+<li><p>服务发现和负载均衡： Kubernetes提供机制来公开服务并将传入的网络流量分发到服务的实例。这有助于负载均衡并将流量路由到适当的容器。</p>
+</li>
+<li><p>自愈性： 如果容器或节点发生故障，Kubernetes可以自动用新容器替换失败的容器，以维护期望的应用程序状态和可用性。</p>
+</li>
+<li><p>配置管理： Kubernetes允许您单独管理应用程序配置和设置，而不与应用程序代码混在一起。这使得可以在不重新部署整个应用程序的情况下修改配置。</p>
+</li>
+<li><p>存储编排： Kubernetes提供了管理和挂载容器的存储的方式，从而实现数据持久性和在容器实例之间的共享。</p>
+</li>
+<li><p>声明式管理： Kubernetes使用声明性配置文件（YAML或JSON）来定义应用程序和基础架构的期望状态。系统会持续工作，确保当前状态与配置中指定的期望状态相匹配。</p>
+</li>
+<li><p>滚动更新和回滚： Kubernetes支持滚动更新，允许您在不停机的情况下更新应用程序。如果更新引发问题，您可以轻松回滚到先前的版本。</p>
+</li>
+<li><p>可扩展性： Kubernetes采用模块化架构，允许添加自定义插件和扩展，使其适应各种环境和需求。</p>
+</li>
+</ul>
+<h2 id="Docker"><a href="#Docker" class="headerlink" title="Docker"></a>Docker</h2><p>Docker是一种开源的容器化平台，用于构建、发布和运行应用程序及其依赖项在轻量级、可移植的容器中。Docker容器是一种轻量级的虚拟化技术，允许应用程序在隔离的环境中运行，同时共享主机操作系统的内核。这使得应用程序可以在不同的环境中以一致的方式运行，从开发环境到生产环境，从本地机器到云服务器。</p>
+<h3 id="核心概念"><a href="#核心概念" class="headerlink" title="核心概念"></a>核心概念</h3><ul>
+<li><p>容器： 容器是一个独立且可执行的软件包，包括应用程序及其运行时所需的库、环境变量、配置文件等。容器是轻量级的，因为它们共享主机操作系统的内核。</p>
+</li>
+<li><p>镜像： 镜像是用于构建容器的模板。它包含了一切应用程序运行所需的文件、依赖项和配置信息。镜像是不可变的，一旦创建就不会改变。可以通过在Docker镜像上创建多个容器来实现应用程序的运行。</p>
+</li>
+<li><p>容器运行时： Docker容器运行时是负责启动、停止和管理容器的组件。常用的容器运行时包括Docker Engine、containerd等。</p>
+</li>
+<li><p>Docker引擎： Docker引擎是Docker平台的核心组件，包括Docker守护进程、CLI工具和REST API。它负责管理容器、镜像、网络等。</p>
+</li>
+</ul>
+<h3 id="优势特性"><a href="#优势特性" class="headerlink" title="优势特性"></a>优势特性</h3><ul>
+<li><p>轻量级和快速启动： 容器与传统虚拟机相比更轻量级，可以在几秒钟内启动。这使得应用程序的部署和扩展更加高效。</p>
+</li>
+<li><p>一致性： 应用程序在不同环境中以相同的方式运行，避免了“在我的机器上可工作”等问题。</p>
+</li>
+<li><p>隔离性： 容器之间以及容器与宿主机之间有强大的隔离性，可以防止应用程序之间的冲突和干扰。</p>
+</li>
+<li><p>可移植性： Docker容器可以在任何支持Docker的环境中运行，无论是开发人员的笔记本电脑还是云服务器。</p>
+</li>
+<li><p>可扩展性： Docker容器可以轻松地在多个主机上进行复制和扩展，实现应用程序的水平扩展。</p>
+</li>
+</ul>
+<h2 id="Flink"><a href="#Flink" class="headerlink" title="Flink"></a>Flink</h2><p>一个开源的流处理和批处理框架，用于处理和分析大规模数据流和批量数据。</p>
+<h3 id="组成"><a href="#组成" class="headerlink" title="组成"></a>组成</h3><ul>
+<li>JobManager</li>
+<li>TaskManager</li>
+</ul>
+<h1 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h1><ol>
+<li>k8s集群环境</li>
+<li>Docker私有仓库</li>
+<li>Hadoop(Hive)环境<br>write data to iceberg,hudi, or flink checkpoint use hdfs</li>
+</ol>
+<h1 id="编写Flink-APP"><a href="#编写Flink-APP" class="headerlink" title="编写Flink-APP"></a>编写Flink-APP</h1><h2 id="maven-依赖引入"><a href="#maven-依赖引入" class="headerlink" title="maven 依赖引入"></a>maven 依赖引入</h2><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br><span class="line">257</span><br><span class="line">258</span><br><span class="line">259</span><br><span class="line">260</span><br><span class="line">261</span><br><span class="line">262</span><br><span class="line">263</span><br><span class="line">264</span><br><span class="line">265</span><br><span class="line">266</span><br><span class="line">267</span><br><span class="line">268</span><br><span class="line">269</span><br><span class="line">270</span><br><span class="line">271</span><br><span class="line">272</span><br><span class="line">273</span><br><span class="line">274</span><br><span class="line">275</span><br><span class="line">276</span><br><span class="line">277</span><br><span class="line">278</span><br><span class="line">279</span><br><span class="line">280</span><br><span class="line">281</span><br><span class="line">282</span><br><span class="line">283</span><br><span class="line">284</span><br><span class="line">285</span><br><span class="line">286</span><br><span class="line">287</span><br><span class="line">288</span><br><span class="line">289</span><br><span class="line">290</span><br><span class="line">291</span><br><span class="line">292</span><br><span class="line">293</span><br><span class="line">294</span><br><span class="line">295</span><br><span class="line">296</span><br><span class="line">297</span><br><span class="line">298</span><br><span class="line">299</span><br><span class="line">300</span><br><span class="line">301</span><br><span class="line">302</span><br><span class="line">303</span><br><span class="line">304</span><br><span class="line">305</span><br><span class="line">306</span><br><span class="line">307</span><br><span class="line">308</span><br><span class="line">309</span><br><span class="line">310</span><br><span class="line">311</span><br><span class="line">312</span><br><span class="line">313</span><br><span class="line">314</span><br><span class="line">315</span><br><span class="line">316</span><br><span class="line">317</span><br><span class="line">318</span><br><span class="line">319</span><br><span class="line">320</span><br><span class="line">321</span><br><span class="line">322</span><br><span class="line">323</span><br><span class="line">324</span><br><span class="line">325</span><br><span class="line">326</span><br><span class="line">327</span><br><span class="line">328</span><br><span class="line">329</span><br><span class="line">330</span><br><span class="line">331</span><br><span class="line">332</span><br><span class="line">333</span><br><span class="line">334</span><br><span class="line">335</span><br><span class="line">336</span><br><span class="line">337</span><br><span class="line">338</span><br><span class="line">339</span><br><span class="line">340</span><br><span class="line">341</span><br><span class="line">342</span><br><span class="line">343</span><br><span class="line">344</span><br><span class="line">345</span><br><span class="line">346</span><br><span class="line">347</span><br><span class="line">348</span><br><span class="line">349</span><br><span class="line">350</span><br><span class="line">351</span><br><span class="line">352</span><br><span class="line">353</span><br><span class="line">354</span><br><span class="line">355</span><br><span class="line">356</span><br><span class="line">357</span><br><span class="line">358</span><br><span class="line">359</span><br><span class="line">360</span><br><span class="line">361</span><br><span class="line">362</span><br><span class="line">363</span><br><span class="line">364</span><br><span class="line">365</span><br><span class="line">366</span><br><span class="line">367</span><br><span class="line">368</span><br><span class="line">369</span><br><span class="line">370</span><br><span class="line">371</span><br><span class="line">372</span><br><span class="line">373</span><br><span class="line">374</span><br><span class="line">375</span><br><span class="line">376</span><br><span class="line">377</span><br><span class="line">378</span><br><span class="line">379</span><br><span class="line">380</span><br><span class="line">381</span><br><span class="line">382</span><br><span class="line">383</span><br><span class="line">384</span><br><span class="line">385</span><br><span class="line">386</span><br><span class="line">387</span><br><span class="line">388</span><br><span class="line">389</span><br><span class="line">390</span><br><span class="line">391</span><br><span class="line">392</span><br><span class="line">393</span><br><span class="line">394</span><br><span class="line">395</span><br><span class="line">396</span><br><span class="line">397</span><br><span class="line">398</span><br><span class="line">399</span><br><span class="line">400</span><br><span class="line">401</span><br><span class="line">402</span><br><span class="line">403</span><br><span class="line">404</span><br><span class="line">405</span><br><span class="line">406</span><br><span class="line">407</span><br><span class="line">408</span><br><span class="line">409</span><br><span class="line">410</span><br><span class="line">411</span><br><span class="line">412</span><br><span class="line">413</span><br><span class="line">414</span><br><span class="line">415</span><br><span class="line">416</span><br><span class="line">417</span><br><span class="line">418</span><br><span class="line">419</span><br><span class="line">420</span><br><span class="line">421</span><br><span class="line">422</span><br><span class="line">423</span><br><span class="line">424</span><br><span class="line">425</span><br><span class="line">426</span><br><span class="line">427</span><br><span class="line">428</span><br><span class="line">429</span><br><span class="line">430</span><br><span class="line">431</span><br><span class="line">432</span><br><span class="line">433</span><br><span class="line">434</span><br><span class="line">435</span><br><span class="line">436</span><br><span class="line">437</span><br><span class="line">438</span><br><span class="line">439</span><br><span class="line">440</span><br><span class="line">441</span><br><span class="line">442</span><br><span class="line">443</span><br><span class="line">444</span><br><span class="line">445</span><br><span class="line">446</span><br><span class="line">447</span><br><span class="line">448</span><br><span class="line">449</span><br><span class="line">450</span><br><span class="line">451</span><br><span class="line">452</span><br><span class="line">453</span><br><span class="line">454</span><br><span class="line">455</span><br><span class="line">456</span><br><span class="line">457</span><br><span class="line">458</span><br><span class="line">459</span><br><span class="line">460</span><br><span class="line">461</span><br></pre></td><td class="code"><pre><code class="hljs xml"> <span class="hljs-tag">&lt;<span class="hljs-name">properties</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">maven.compiler.source</span>&gt;</span>8<span class="hljs-tag">&lt;/<span class="hljs-name">maven.compiler.source</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">maven.compiler.target</span>&gt;</span>8<span class="hljs-tag">&lt;/<span class="hljs-name">maven.compiler.target</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">project.build.sourceEncoding</span>&gt;</span>UTF-8<span class="hljs-tag">&lt;/<span class="hljs-name">project.build.sourceEncoding</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">iceberg.version</span>&gt;</span>1.0.0<span class="hljs-tag">&lt;/<span class="hljs-name">iceberg.version</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">hive.version</span>&gt;</span>2.1.1<span class="hljs-tag">&lt;/<span class="hljs-name">hive.version</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">properties</span>&gt;</span><br><br>    <span class="hljs-tag">&lt;<span class="hljs-name">dependencies</span>&gt;</span><br>        <span class="hljs-comment">&lt;!--        flink --&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-java<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-streaming-java_$&#123;scala.binary.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-json<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-core<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-connector-base<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-clients_$&#123;scala.binary.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-shaded-hadoop-2-uber<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>2.8.3-9.0<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">exclusions</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">exclusion</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.slf4j<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>slf4j-log4j12<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">exclusion</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">exclusions</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-table-planner_$&#123;scala.binary.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-table-common<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-table-api-java-bridge_$&#123;scala.binary.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-table-api-java<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-table-runtime_$&#123;scala.binary.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-sql-connector-kafka_$&#123;scala.binary.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-connector-hive_$&#123;scala.binary.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">exclusions</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">exclusion</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.hive<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>hive-metastore<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">exclusion</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">exclusions</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-sql-connector-hive-2.2.0_2.12<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">exclusions</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">exclusion</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>commons-lang<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>commons-lang<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">exclusion</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">exclusion</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.commons<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>commons-lang3<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">exclusion</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">exclusion</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.hive<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>hive-metastore<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">exclusion</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">exclusions</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>compile<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-comment">&lt;!--    flink end    --&gt;</span><br>        <span class="hljs-comment">&lt;!--     hive    --&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.hive<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>hive-metastore<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;hive.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">exclusions</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">exclusion</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>commons-lang<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>commons-lang<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">exclusion</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">exclusion</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.commons<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>commons-lang3<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">exclusion</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">exclusions</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>compile<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.hive<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>hive-exec<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;hive.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">exclusions</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">exclusion</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>antlr-runtime<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.antlr<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">exclusion</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">exclusion</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.hadoop<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>hadoop-common<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">exclusion</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">exclusion</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>commons-lang<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>commons-lang<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">exclusion</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">exclusion</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.commons<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>commons-lang3<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">exclusion</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">exclusions</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-comment">&lt;!--  hive end    --&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>xml-apis<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>xml-apis<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>1.4.01<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>mysql<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>mysql-connector-java<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>8.0.25<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.postgresql<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>postgresql<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>42.5.0<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>com.microsoft.sqlserver<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>mssql-jdbc<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>11.2.0.jre8<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>com.oracle.ojdbc<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>ojdbc8<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>19.3.0.0<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-comment">&lt;!--  iceberg      --&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.iceberg<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>iceberg-flink-runtime-1.14<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;iceberg.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-comment">&lt;!--  iceberg   end   --&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.logging.log4j<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>log4j-slf4j-impl<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;log4j.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.logging.log4j<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>log4j-api<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;log4j.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.logging.log4j<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>log4j-core<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;log4j.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-comment">&lt;!-- log4j2 日志layout json模板        --&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.logging.log4j<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>log4j-layout-template-json<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;log4j.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>        <span class="hljs-comment">&lt;!-- 日志组件往kafka中写日志       --&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.kafka<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>kafka-log4j-appender<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>3.2.1<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">exclusions</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">exclusion</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.kafka<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>kafka-clients<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">exclusion</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">exclusions</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>junit<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>junit<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>4.12<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>test<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.kafka<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>kafka-clients<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;kafka.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-runtime-web_2.12<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>test<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">dependencies</span>&gt;</span><br><br><br>    <span class="hljs-tag">&lt;<span class="hljs-name">build</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">plugins</span>&gt;</span><br><br>            <span class="hljs-comment">&lt;!-- Java Compiler --&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">plugin</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>maven-compiler-plugin<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>3.1<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">configuration</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">source</span>&gt;</span>$&#123;target.java.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">source</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">target</span>&gt;</span>$&#123;target.java.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">target</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">configuration</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">plugin</span>&gt;</span><br><br>            <span class="hljs-comment">&lt;!-- We use the maven-shade plugin to create a fat jar that contains all necessary dependencies. --&gt;</span><br>            <span class="hljs-comment">&lt;!-- Change the value of &lt;mainClass&gt;...&lt;/mainClass&gt; if your program entry point changes. --&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">plugin</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>maven-shade-plugin<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>3.1.1<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">configuration</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">artifactSet</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">excludes</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">exclude</span>&gt;</span>org.apache.flink:flink-shaded-force-shading<span class="hljs-tag">&lt;/<span class="hljs-name">exclude</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">exclude</span>&gt;</span>com.google.code.findbugs:jsr305<span class="hljs-tag">&lt;/<span class="hljs-name">exclude</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">exclude</span>&gt;</span>org.slf4j:*<span class="hljs-tag">&lt;/<span class="hljs-name">exclude</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">exclude</span>&gt;</span>org.apache.logging.log4j:*<span class="hljs-tag">&lt;/<span class="hljs-name">exclude</span>&gt;</span><br>                        <span class="hljs-tag">&lt;/<span class="hljs-name">excludes</span>&gt;</span><br>                    <span class="hljs-tag">&lt;/<span class="hljs-name">artifactSet</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">minimizeJar</span>&gt;</span>true<span class="hljs-tag">&lt;/<span class="hljs-name">minimizeJar</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">filters</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">filter</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">artifact</span>&gt;</span>*:*<span class="hljs-tag">&lt;/<span class="hljs-name">artifact</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">excludes</span>&gt;</span><br>                                <span class="hljs-tag">&lt;<span class="hljs-name">exclude</span>&gt;</span>META-INF/*.SF<span class="hljs-tag">&lt;/<span class="hljs-name">exclude</span>&gt;</span><br>                                <span class="hljs-tag">&lt;<span class="hljs-name">exclude</span>&gt;</span>META-INF/*.DSA<span class="hljs-tag">&lt;/<span class="hljs-name">exclude</span>&gt;</span><br>                                <span class="hljs-tag">&lt;<span class="hljs-name">exclude</span>&gt;</span>META-INF/*.RSA<span class="hljs-tag">&lt;/<span class="hljs-name">exclude</span>&gt;</span><br>                            <span class="hljs-tag">&lt;/<span class="hljs-name">excludes</span>&gt;</span><br>                        <span class="hljs-tag">&lt;/<span class="hljs-name">filter</span>&gt;</span><br>                    <span class="hljs-tag">&lt;/<span class="hljs-name">filters</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">transformers</span>&gt;</span><br><span class="hljs-comment">&lt;!--                        &lt;transformer implementation=&quot;org.apache.maven.plugins.shade.resource.ServicesResourceTransformer&quot;/&gt;--&gt;</span><br><span class="hljs-comment">&lt;!--                        &lt;transformer implementation=&quot;org.apache.maven.plugins.shade.resource.ServicesResourceTransformer&quot;/&gt;--&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">transformer</span>  <span class="hljs-attr">implementation</span>=<span class="hljs-string">&quot;org.apache.maven.plugins.shade.resource.ManifestResourceTransformer&quot;</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">mainClass</span>&gt;</span>com.xxx.xxx.MainClass<span class="hljs-tag">&lt;/<span class="hljs-name">mainClass</span>&gt;</span><br>                        <span class="hljs-tag">&lt;/<span class="hljs-name">transformer</span>&gt;</span><br>                    <span class="hljs-tag">&lt;/<span class="hljs-name">transformers</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">configuration</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">executions</span>&gt;</span><br>                    <span class="hljs-comment">&lt;!-- Run shade goal on package phase --&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">execution</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">phase</span>&gt;</span>package<span class="hljs-tag">&lt;/<span class="hljs-name">phase</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">goals</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">goal</span>&gt;</span>shade<span class="hljs-tag">&lt;/<span class="hljs-name">goal</span>&gt;</span><br>                        <span class="hljs-tag">&lt;/<span class="hljs-name">goals</span>&gt;</span><br>                    <span class="hljs-tag">&lt;/<span class="hljs-name">execution</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">executions</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">plugin</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">plugin</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>maven-dependency-plugin<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>3.6.0<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">executions</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">execution</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">id</span>&gt;</span>copy-compile-dependencies<span class="hljs-tag">&lt;/<span class="hljs-name">id</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">phase</span>&gt;</span>package<span class="hljs-tag">&lt;/<span class="hljs-name">phase</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">goals</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">goal</span>&gt;</span>copy-dependencies<span class="hljs-tag">&lt;/<span class="hljs-name">goal</span>&gt;</span><br>                        <span class="hljs-tag">&lt;/<span class="hljs-name">goals</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">configuration</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">outputDirectory</span>&gt;</span>$&#123;project.build.directory&#125;/deps<span class="hljs-tag">&lt;/<span class="hljs-name">outputDirectory</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">excludeTransitive</span>&gt;</span>false<span class="hljs-tag">&lt;/<span class="hljs-name">excludeTransitive</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">stripVersion</span>&gt;</span>false<span class="hljs-tag">&lt;/<span class="hljs-name">stripVersion</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">includeScope</span>&gt;</span>compile<span class="hljs-tag">&lt;/<span class="hljs-name">includeScope</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">excludeArtifactIds</span>&gt;</span><br>                            <span class="hljs-tag">&lt;/<span class="hljs-name">excludeArtifactIds</span>&gt;</span><br>                        <span class="hljs-tag">&lt;/<span class="hljs-name">configuration</span>&gt;</span><br>                    <span class="hljs-tag">&lt;/<span class="hljs-name">execution</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">execution</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">id</span>&gt;</span>copy-provided-dependencies<span class="hljs-tag">&lt;/<span class="hljs-name">id</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">phase</span>&gt;</span>package<span class="hljs-tag">&lt;/<span class="hljs-name">phase</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">goals</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">goal</span>&gt;</span>copy-dependencies<span class="hljs-tag">&lt;/<span class="hljs-name">goal</span>&gt;</span><br>                        <span class="hljs-tag">&lt;/<span class="hljs-name">goals</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">configuration</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">outputDirectory</span>&gt;</span>$&#123;project.build.directory&#125;/lib<span class="hljs-tag">&lt;/<span class="hljs-name">outputDirectory</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">excludeTransitive</span>&gt;</span>false<span class="hljs-tag">&lt;/<span class="hljs-name">excludeTransitive</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">stripVersion</span>&gt;</span>false<span class="hljs-tag">&lt;/<span class="hljs-name">stripVersion</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">includeScope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">includeScope</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">excludeArtifactIds</span>&gt;</span><br>                            <span class="hljs-tag">&lt;/<span class="hljs-name">excludeArtifactIds</span>&gt;</span><br>                        <span class="hljs-tag">&lt;/<span class="hljs-name">configuration</span>&gt;</span><br>                    <span class="hljs-tag">&lt;/<span class="hljs-name">execution</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">executions</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">plugin</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">plugins</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">pluginManagement</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">plugins</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">plugins</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">pluginManagement</span>&gt;</span><br><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">build</span>&gt;</span><br><br>    <span class="hljs-tag">&lt;<span class="hljs-name">profiles</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">profile</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">id</span>&gt;</span>hive2<span class="hljs-tag">&lt;/<span class="hljs-name">id</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">activation</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">activeByDefault</span>&gt;</span>true<span class="hljs-tag">&lt;/<span class="hljs-name">activeByDefault</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">activation</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">repositories</span>&gt;</span><br>                <span class="hljs-comment">&lt;!-- hive-jdbc hive2版本,依赖org.pentaho:pentaho-aggdesigner-algorithm:pom:5.1.5-jhyde --&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">repository</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">id</span>&gt;</span>aliyunmaven-sp<span class="hljs-tag">&lt;/<span class="hljs-name">id</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">name</span>&gt;</span>spring-plugin<span class="hljs-tag">&lt;/<span class="hljs-name">name</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">url</span>&gt;</span>https://maven.aliyun.com/repository/spring-plugin<span class="hljs-tag">&lt;/<span class="hljs-name">url</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">repository</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">repositories</span>&gt;</span><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">profile</span>&gt;</span><br>        <span class="hljs-tag">&lt;<span class="hljs-name">profile</span>&gt;</span><br>            <span class="hljs-comment">&lt;!--  -P hive3           --&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">id</span>&gt;</span>hive3<span class="hljs-tag">&lt;/<span class="hljs-name">id</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">properties</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">hive.version</span>&gt;</span>3.1.3<span class="hljs-tag">&lt;/<span class="hljs-name">hive.version</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">properties</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">dependencies</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.flink<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>flink-sql-connector-hive-3.1.2_2.12<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;flink.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">scope</span>&gt;</span>compile<span class="hljs-tag">&lt;/<span class="hljs-name">scope</span>&gt;</span><br>                    <span class="hljs-comment">&lt;!--            &lt;scope&gt;provided&lt;/scope&gt;--&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">dependency</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.hive<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>hive-metastore<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>$&#123;hive.version&#125;<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">dependency</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">dependencies</span>&gt;</span><br>            <span class="hljs-tag">&lt;<span class="hljs-name">build</span>&gt;</span><br>                <span class="hljs-tag">&lt;<span class="hljs-name">plugins</span>&gt;</span><br>                    <span class="hljs-tag">&lt;<span class="hljs-name">plugin</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">groupId</span>&gt;</span>org.apache.maven.plugins<span class="hljs-tag">&lt;/<span class="hljs-name">groupId</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">artifactId</span>&gt;</span>maven-dependency-plugin<span class="hljs-tag">&lt;/<span class="hljs-name">artifactId</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">version</span>&gt;</span>3.6.0<span class="hljs-tag">&lt;/<span class="hljs-name">version</span>&gt;</span><br>                        <span class="hljs-tag">&lt;<span class="hljs-name">executions</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">execution</span>&gt;</span><br>                                <span class="hljs-tag">&lt;<span class="hljs-name">id</span>&gt;</span>copy-compile-dependencies<span class="hljs-tag">&lt;/<span class="hljs-name">id</span>&gt;</span><br>                                <span class="hljs-tag">&lt;<span class="hljs-name">phase</span>&gt;</span>package<span class="hljs-tag">&lt;/<span class="hljs-name">phase</span>&gt;</span><br>                                <span class="hljs-tag">&lt;<span class="hljs-name">goals</span>&gt;</span><br>                                    <span class="hljs-tag">&lt;<span class="hljs-name">goal</span>&gt;</span>copy-dependencies<span class="hljs-tag">&lt;/<span class="hljs-name">goal</span>&gt;</span><br>                                <span class="hljs-tag">&lt;/<span class="hljs-name">goals</span>&gt;</span><br>                                <span class="hljs-tag">&lt;<span class="hljs-name">configuration</span>&gt;</span><br>                             <br>                                    <span class="hljs-tag">&lt;<span class="hljs-name">excludeTransitive</span>&gt;</span>false<span class="hljs-tag">&lt;/<span class="hljs-name">excludeTransitive</span>&gt;</span><br>                                    <span class="hljs-tag">&lt;<span class="hljs-name">stripVersion</span>&gt;</span>false<span class="hljs-tag">&lt;/<span class="hljs-name">stripVersion</span>&gt;</span><br>                                    <span class="hljs-tag">&lt;<span class="hljs-name">includeScope</span>&gt;</span>compile<span class="hljs-tag">&lt;/<span class="hljs-name">includeScope</span>&gt;</span><br>                                    <span class="hljs-tag">&lt;<span class="hljs-name">excludeArtifactIds</span>&gt;</span><br>                                        flink-sql-connector-hive-2.2.0_$&#123;scala.binary.version&#125;<br>                                    <span class="hljs-tag">&lt;/<span class="hljs-name">excludeArtifactIds</span>&gt;</span><br>                                <span class="hljs-tag">&lt;/<span class="hljs-name">configuration</span>&gt;</span><br>                            <span class="hljs-tag">&lt;/<span class="hljs-name">execution</span>&gt;</span><br>                            <span class="hljs-tag">&lt;<span class="hljs-name">execution</span>&gt;</span><br>                                <span class="hljs-tag">&lt;<span class="hljs-name">id</span>&gt;</span>copy-provided-dependencies<span class="hljs-tag">&lt;/<span class="hljs-name">id</span>&gt;</span><br>                                <span class="hljs-tag">&lt;<span class="hljs-name">phase</span>&gt;</span>package<span class="hljs-tag">&lt;/<span class="hljs-name">phase</span>&gt;</span><br>                                <span class="hljs-tag">&lt;<span class="hljs-name">goals</span>&gt;</span><br>                                    <span class="hljs-tag">&lt;<span class="hljs-name">goal</span>&gt;</span>copy-dependencies<span class="hljs-tag">&lt;/<span class="hljs-name">goal</span>&gt;</span><br>                                <span class="hljs-tag">&lt;/<span class="hljs-name">goals</span>&gt;</span><br>                                <span class="hljs-tag">&lt;<span class="hljs-name">configuration</span>&gt;</span><br>                                    <span class="hljs-tag">&lt;<span class="hljs-name">outputDirectory</span>&gt;</span>$&#123;project.build.directory&#125;/lib<span class="hljs-tag">&lt;/<span class="hljs-name">outputDirectory</span>&gt;</span><br>                                    <span class="hljs-tag">&lt;<span class="hljs-name">excludeTransitive</span>&gt;</span>true<span class="hljs-tag">&lt;/<span class="hljs-name">excludeTransitive</span>&gt;</span><br>                                    <span class="hljs-tag">&lt;<span class="hljs-name">stripVersion</span>&gt;</span>false<span class="hljs-tag">&lt;/<span class="hljs-name">stripVersion</span>&gt;</span><br>                                    <span class="hljs-tag">&lt;<span class="hljs-name">includeScope</span>&gt;</span>provided<span class="hljs-tag">&lt;/<span class="hljs-name">includeScope</span>&gt;</span><br>                                    <span class="hljs-tag">&lt;<span class="hljs-name">excludeArtifactIds</span>&gt;</span><br>                                        flink-sql-connector-hive-2.2.0_$&#123;scala.binary.version&#125;<br>                                    <span class="hljs-tag">&lt;/<span class="hljs-name">excludeArtifactIds</span>&gt;</span><br>                                <span class="hljs-tag">&lt;/<span class="hljs-name">configuration</span>&gt;</span><br>                            <span class="hljs-tag">&lt;/<span class="hljs-name">execution</span>&gt;</span><br>                        <span class="hljs-tag">&lt;/<span class="hljs-name">executions</span>&gt;</span><br>                    <span class="hljs-tag">&lt;/<span class="hljs-name">plugin</span>&gt;</span><br>                <span class="hljs-tag">&lt;/<span class="hljs-name">plugins</span>&gt;</span><br>            <span class="hljs-tag">&lt;/<span class="hljs-name">build</span>&gt;</span><br><br>        <span class="hljs-tag">&lt;/<span class="hljs-name">profile</span>&gt;</span><br>    <span class="hljs-tag">&lt;/<span class="hljs-name">profiles</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>程序主要逻辑:<br>读取kafka中json数据,写入到iceberg中.</p>
+<h1 id="Build-Docker-Image"><a href="#Build-Docker-Image" class="headerlink" title="Build-Docker-Image"></a>Build-Docker-Image</h1><h2 id="Dockerfile"><a href="#Dockerfile" class="headerlink" title="Dockerfile"></a>Dockerfile</h2><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs Dockerfile"><span class="hljs-keyword">FROM</span> flink:<span class="hljs-number">1.14</span>.<span class="hljs-number">5</span>-scala_2.<span class="hljs-number">12</span>-java8<br><br><span class="hljs-keyword">RUN</span><span class="language-bash"> <span class="hljs-built_in">set</span> -ex; \</span><br><span class="language-bash">  apt-get update; \</span><br><span class="language-bash">  apt-get -y  install s3fs; \</span><br><span class="language-bash">  <span class="hljs-built_in">rm</span> -rf /var/lib/apt/lists/*</span><br><br><span class="hljs-keyword">RUN</span><span class="language-bash"> <span class="hljs-built_in">set</span> -ex; <span class="hljs-built_in">rm</span> -rf /opt/flink/lib/*</span><br><br><span class="hljs-keyword">COPY</span><span class="language-bash"> docker-entrypoint.sh /</span><br><span class="hljs-keyword">RUN</span><span class="language-bash"> <span class="hljs-built_in">mkdir</span> -p <span class="hljs-variable">$FLINK_HOME</span>/usrlib</span><br><span class="hljs-keyword">COPY</span><span class="language-bash"> ./xxxxx.jar <span class="hljs-variable">$FLINK_HOME</span>/usrlib/</span><br></code></pre></td></tr></table></figure>
+<h2 id="docker-entrypoint-sh"><a href="#docker-entrypoint-sh" class="headerlink" title="docker-entrypoint.sh"></a>docker-entrypoint.sh</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-meta">#!/usr/bin/env bash</span><br><br><span class="hljs-comment">###############################################################################</span><br><span class="hljs-comment">#  Licensed to the Apache Software Foundation (ASF) under one</span><br><span class="hljs-comment">#  or more contributor license agreements.  See the NOTICE file</span><br><span class="hljs-comment">#  distributed with this work for additional information</span><br><span class="hljs-comment">#  regarding copyright ownership.  The ASF licenses this file</span><br><span class="hljs-comment">#  to you under the Apache License, Version 2.0 (the</span><br><span class="hljs-comment">#  &quot;License&quot;); you may not use this file except in compliance</span><br><span class="hljs-comment">#  with the License.  You may obtain a copy of the License at</span><br><span class="hljs-comment">#</span><br><span class="hljs-comment">#      http://www.apache.org/licenses/LICENSE-2.0</span><br><span class="hljs-comment">#</span><br><span class="hljs-comment">#  Unless required by applicable law or agreed to in writing, software</span><br><span class="hljs-comment">#  distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span><br><span class="hljs-comment">#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span><br><span class="hljs-comment">#  See the License for the specific language governing permissions and</span><br><span class="hljs-comment"># limitations under the License.</span><br><span class="hljs-comment">###############################################################################</span><br><br><span class="hljs-comment">###################### minio mount start#####################</span><br>AWS_S3_ACCESS_KEY_ID=<span class="hljs-variable">$&#123;AWS_S3_ACCESS_KEY_ID:-&quot;&quot;&#125;</span><br>AWS_S3_SECRET_ACCESS_KEY=<span class="hljs-variable">$&#123;AWS_S3_SECRET_ACCESS_KEY:-&quot;&quot;&#125;</span><br>AWS_S3_ROOT_DIR=<span class="hljs-variable">$&#123;AWS_S3_ROOT_DIR:-&quot;/&quot;&#125;</span><br>AWS_S3_AUTH_FILE=<span class="hljs-variable">$&#123;AWS_S3_ROOTDIR&#125;</span>/passwd-s3fs<br><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;AWS_S3_ACCESS_KEY_ID&#125;</span>:<span class="hljs-variable">$&#123;AWS_S3_SECRET_ACCESS_KEY&#125;</span>&quot;</span> &gt; <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;AWS_S3_AUTH_FILE&#125;</span>&quot;</span><br><br><span class="hljs-built_in">chmod</span> 600 <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;AWS_S3_AUTH_FILE&#125;</span>&quot;</span><br><span class="hljs-comment">#cat $&#123;AWS_S3_AUTH_FILE&#125;</span><br><span class="hljs-keyword">if</span> [ ! -d <span class="hljs-string">&quot;<span class="hljs-variable">$AWS_S3_MOUNT</span>&quot;</span> ]; <span class="hljs-keyword">then</span><br>    <span class="hljs-built_in">mkdir</span> -p <span class="hljs-string">&quot;<span class="hljs-variable">$AWS_S3_MOUNT</span>&quot;</span><br><span class="hljs-keyword">fi</span><br><br><span class="hljs-keyword">if</span> [[ <span class="hljs-variable">$AWS_S3_ACCESS_KEY_ID</span> != <span class="hljs-string">&#x27;&#x27;</span> ]];<span class="hljs-keyword">then</span><br>  <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;-------------minio info---------------------&quot;</span><br>  <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;AWS_S3_ACCESS_KEY_ID=<span class="hljs-variable">$&#123;AWS_S3_ACCESS_KEY_ID&#125;</span>,AWS_S3_SECRET_ACCESS_KEY=<span class="hljs-variable">$&#123;AWS_S3_SECRET_ACCESS_KEY&#125;</span>,AWS_S3_BUCKET=<span class="hljs-variable">$&#123;AWS_S3_BUCKET&#125;</span>,AWS_S3_MOUNT=<span class="hljs-variable">$&#123;AWS_S3_MOUNT&#125;</span>,AWS_S3_URL=<span class="hljs-variable">$&#123;AWS_S3_URL&#125;</span>&quot;</span><br>  <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;--------------------------------------------&quot;</span><br>  <span class="hljs-comment"># s3fs -o passwd_file=/root/.passwd-s3fs -o url=$&#123;MINIO_URL&#125; -o allow_other -o nonempty -o no_check_certificate -o use_path_request_style -o umask=000 $&#123;MINIO_VOLUME&#125; $&#123;MOUNT_PATH&#125;</span><br>  mount_cmd=<span class="hljs-string">&quot;s3fs -o <span class="hljs-variable">$&#123;S3FS_ARGS&#125;</span> -o passwd_file=<span class="hljs-variable">$&#123;AWS_S3_AUTH_FILE&#125;</span> -o url=<span class="hljs-variable">$&#123;AWS_S3_URL&#125;</span> <span class="hljs-variable">$&#123;AWS_S3_BUCKET&#125;</span> <span class="hljs-variable">$&#123;AWS_S3_MOUNT&#125;</span>&quot;</span><br>  <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;mount_cmd=[<span class="hljs-variable">$&#123;mount_cmd&#125;</span>]&quot;</span><br>  <span class="hljs-built_in">which</span> s3fs<br>  <span class="hljs-keyword">if</span> [[ $? != <span class="hljs-string">&#x27;0&#x27;</span> ]];<span class="hljs-keyword">then</span><br>    <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;need first install s3fs,install cmd: apt-get update;  apt-get install -y s3fs&quot;</span><br>  <span class="hljs-keyword">fi</span><br>  <span class="hljs-built_in">eval</span> <span class="hljs-variable">$mount_cmd</span><br>  <span class="hljs-keyword">if</span> [[ $? == <span class="hljs-string">&#x27;0&#x27;</span> ]];<span class="hljs-keyword">then</span><br>    <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;mount minio success&quot;</span><br>  <span class="hljs-keyword">else</span><br>    <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;mount minio fail...&quot;</span><br>    <span class="hljs-built_in">cat</span> <span class="hljs-variable">$&#123;AWS_S3_AUTH_FILE&#125;</span><br>  <span class="hljs-keyword">fi</span><br><span class="hljs-keyword">fi</span><br><span class="hljs-comment">##################### minio mount end###############################</span><br><span class="hljs-built_in">ls</span> -alh /opt/flink/lib<br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;print origin lib dir end -----------&quot;</span><br><br><br>FLINK_EXTRA_LIBS=<span class="hljs-variable">$&#123;FLINK_EXTRA_LIBS:-&quot;&quot;&#125;</span><br><span class="hljs-keyword">if</span> [[ <span class="hljs-variable">$FLINK_EXTRA_LIBS</span> != <span class="hljs-string">&#x27;&#x27;</span> ]];<span class="hljs-keyword">then</span><br>   <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;copy flink extra libs to /opt/flink/lib&quot;</span><br>   <span class="hljs-built_in">cp</span> -rf <span class="hljs-variable">$&#123;FLINK_EXTRA_LIBS&#125;</span>/* /opt/flink/lib<br><span class="hljs-keyword">fi</span><br><br><span class="hljs-comment">### print flink lib dir #########</span><br><span class="hljs-built_in">ls</span> -alh /opt/flink/lib<br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;print lib dir end -----------&quot;</span><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;----------list flink/conf------------&quot;</span><br><span class="hljs-built_in">ls</span> -alh /opt/flink/conf<br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;----------list flink/conf--end------------&quot;</span><br><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;FLINK_HOME=<span class="hljs-variable">$&#123;FLINK_HOME&#125;</span>&quot;</span><br><br>COMMAND_STANDALONE=<span class="hljs-string">&quot;standalone-job&quot;</span><br>COMMAND_HISTORY_SERVER=<span class="hljs-string">&quot;history-server&quot;</span><br><br><span class="hljs-comment"># If unspecified, the hostname of the container is taken as the JobManager address</span><br>JOB_MANAGER_RPC_ADDRESS=<span class="hljs-variable">$&#123;JOB_MANAGER_RPC_ADDRESS:-$(hostname -f)&#125;</span><br>CONF_FILE=<span class="hljs-string">&quot;<span class="hljs-variable">$&#123;FLINK_HOME&#125;</span>/conf/flink-conf.yaml&quot;</span><br><br><span class="hljs-built_in">chmod</span> 775 <span class="hljs-variable">$CONF_FILE</span><br>exec_chmod=`$?`<br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;chmod ret-----------<span class="hljs-variable">$&#123;exec_chmod&#125;</span>&quot;</span><br><br>kerberos_principal=<span class="hljs-variable">$&#123;kerberos_principal:-&quot;&quot;&#125;</span><br>kerberos_keytab=<span class="hljs-variable">$&#123;kerberos_keytab:-&quot;&quot;&#125;</span><br>kerberos_krb5=<span class="hljs-variable">$&#123;kerberos_krb5:-&quot;&quot;&#125;</span><br><br><br><span class="hljs-keyword">if</span> [[ <span class="hljs-variable">$kerberos_krb5</span> != <span class="hljs-string">&#x27;&#x27;</span> ]];<span class="hljs-keyword">then</span><br>   <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;cp kerberos_krb5&quot;</span><br>   <span class="hljs-built_in">cp</span> <span class="hljs-variable">$kerberos_krb5</span> /etc/<br><span class="hljs-keyword">fi</span><br><br><span class="hljs-keyword">if</span> [[ <span class="hljs-variable">$kerberos_principal</span> != <span class="hljs-string">&#x27;&#x27;</span> ]];<span class="hljs-keyword">then</span><br>  <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;security.kerberos.login.use-ticket-cache: true&quot;</span> &gt;&gt; <span class="hljs-variable">$CONF_FILE</span><br>  <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;security.kerberos.login.contexts: Client&quot;</span> &gt;&gt; <span class="hljs-variable">$CONF_FILE</span><br>  <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;security.kerberos.login.keytab: <span class="hljs-variable">$&#123;kerberos_keytab&#125;</span>&quot;</span> &gt;&gt; <span class="hljs-variable">$CONF_FILE</span><br>  <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;security.kerberos.login.principal: <span class="hljs-variable">$&#123;kerberos_principal&#125;</span>&quot;</span> &gt;&gt; <span class="hljs-variable">$CONF_FILE</span><br>  <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;security.kerberos.krb5-conf.path: <span class="hljs-variable">$&#123;kerberos_krb5&#125;</span>&quot;</span> &gt;&gt; <span class="hljs-variable">$CONF_FILE</span><br><span class="hljs-keyword">fi</span><br><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;-----kerberos files ----------------&quot;</span><br><span class="hljs-built_in">ls</span> -al /opt/kerberos/<br><span class="hljs-built_in">ls</span> -al /opt/kerberos/kerberos_keytab/<br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;-----kerberos files ----------------end&quot;</span><br><br><span class="hljs-function"><span class="hljs-title">drop_privs_cmd</span></span>() &#123;<br>    <span class="hljs-keyword">if</span> [ $(<span class="hljs-built_in">id</span> -u) != 0 ]; <span class="hljs-keyword">then</span><br>        <span class="hljs-comment"># Don&#x27;t need to drop privs if EUID != 0</span><br>        <span class="hljs-built_in">return</span><br>    <span class="hljs-keyword">elif</span> [ -x /sbin/su-exec ]; <span class="hljs-keyword">then</span><br>        <span class="hljs-comment"># Alpine</span><br>        <span class="hljs-built_in">echo</span> su-exec flink<br>    <span class="hljs-keyword">else</span><br>        <span class="hljs-comment"># Others</span><br>        <span class="hljs-built_in">echo</span> gosu flink<br>    <span class="hljs-keyword">fi</span><br>&#125;<br><br><br><span class="hljs-function"><span class="hljs-title">copy_plugins_if_required</span></span>() &#123;<br>  <span class="hljs-keyword">if</span> [ -z <span class="hljs-string">&quot;<span class="hljs-variable">$ENABLE_BUILT_IN_PLUGINS</span>&quot;</span> ]; <span class="hljs-keyword">then</span><br>    <span class="hljs-built_in">return</span> 0<br>  <span class="hljs-keyword">fi</span><br><br>  <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Enabling required built-in plugins&quot;</span><br>  <span class="hljs-keyword">for</span> target_plugin <span class="hljs-keyword">in</span> $(<span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;<span class="hljs-variable">$ENABLE_BUILT_IN_PLUGINS</span>&quot;</span> | <span class="hljs-built_in">tr</span> <span class="hljs-string">&#x27;;&#x27;</span> <span class="hljs-string">&#x27; &#x27;</span>); <span class="hljs-keyword">do</span><br>    <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Linking <span class="hljs-variable">$&#123;target_plugin&#125;</span> to plugin directory&quot;</span><br>    plugin_name=<span class="hljs-variable">$&#123;target_plugin%.jar&#125;</span><br><br>    <span class="hljs-built_in">mkdir</span> -p <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;FLINK_HOME&#125;</span>/plugins/<span class="hljs-variable">$&#123;plugin_name&#125;</span>&quot;</span><br>    <span class="hljs-keyword">if</span> [ ! -e <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;FLINK_HOME&#125;</span>/opt/<span class="hljs-variable">$&#123;target_plugin&#125;</span>&quot;</span> ]; <span class="hljs-keyword">then</span><br>      <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Plugin <span class="hljs-variable">$&#123;target_plugin&#125;</span> does not exist. Exiting.&quot;</span><br>      <span class="hljs-built_in">exit</span> 1<br>    <span class="hljs-keyword">else</span><br>      <span class="hljs-built_in">ln</span> -fs <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;FLINK_HOME&#125;</span>/opt/<span class="hljs-variable">$&#123;target_plugin&#125;</span>&quot;</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;FLINK_HOME&#125;</span>/plugins/<span class="hljs-variable">$&#123;plugin_name&#125;</span>&quot;</span><br>      <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Successfully enabled <span class="hljs-variable">$&#123;target_plugin&#125;</span>&quot;</span><br>    <span class="hljs-keyword">fi</span><br>  <span class="hljs-keyword">done</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-title">set_config_option</span></span>() &#123;<br>  <span class="hljs-built_in">local</span> option=<span class="hljs-variable">$1</span><br>  <span class="hljs-built_in">local</span> value=<span class="hljs-variable">$2</span><br><br>  <span class="hljs-comment"># escape periods for usage in regular expressions</span><br>  <span class="hljs-built_in">local</span> escaped_option=$(<span class="hljs-built_in">echo</span> <span class="hljs-variable">$&#123;option&#125;</span> | sed -e <span class="hljs-string">&quot;s/\./\\\./g&quot;</span>)<br><br>  <span class="hljs-comment"># either override an existing entry, or append a new one</span><br>  <span class="hljs-keyword">if</span> grep -E <span class="hljs-string">&quot;^<span class="hljs-variable">$&#123;escaped_option&#125;</span>:.*&quot;</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CONF_FILE&#125;</span>&quot;</span> &gt; /dev/null; <span class="hljs-keyword">then</span><br>        sed -i -e <span class="hljs-string">&quot;s/<span class="hljs-variable">$&#123;escaped_option&#125;</span>:.*/<span class="hljs-variable">$option</span>: <span class="hljs-variable">$value</span>/g&quot;</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CONF_FILE&#125;</span>&quot;</span><br>  <span class="hljs-keyword">else</span><br>        <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;option&#125;</span>: <span class="hljs-variable">$&#123;value&#125;</span>&quot;</span> &gt;&gt; <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CONF_FILE&#125;</span>&quot;</span><br>  <span class="hljs-keyword">fi</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-title">prepare_configuration</span></span>() &#123;<br>    set_config_option jobmanager.rpc.address <span class="hljs-variable">$&#123;JOB_MANAGER_RPC_ADDRESS&#125;</span><br>    set_config_option blob.server.port 6124<br>    set_config_option query.server.port 6125<br><br>    <span class="hljs-keyword">if</span> [ -n <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;TASK_MANAGER_NUMBER_OF_TASK_SLOTS&#125;</span>&quot;</span> ]; <span class="hljs-keyword">then</span><br>        set_config_option taskmanager.numberOfTaskSlots <span class="hljs-variable">$&#123;TASK_MANAGER_NUMBER_OF_TASK_SLOTS&#125;</span><br>    <span class="hljs-keyword">fi</span><br><br>    <span class="hljs-keyword">if</span> [ -n <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;FLINK_PROPERTIES&#125;</span>&quot;</span> ]; <span class="hljs-keyword">then</span><br>        <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;FLINK_PROPERTIES&#125;</span>&quot;</span> &gt;&gt; <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CONF_FILE&#125;</span>&quot;</span><br>    <span class="hljs-keyword">fi</span><br>    envsubst &lt; <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CONF_FILE&#125;</span>&quot;</span> &gt; <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CONF_FILE&#125;</span>.tmp&quot;</span> &amp;&amp; <span class="hljs-built_in">mv</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CONF_FILE&#125;</span>.tmp&quot;</span> <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;CONF_FILE&#125;</span>&quot;</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-title">maybe_enable_jemalloc</span></span>() &#123;<br>    <span class="hljs-keyword">if</span> [ <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;DISABLE_JEMALLOC:-false&#125;</span>&quot;</span> == <span class="hljs-string">&quot;false&quot;</span> ]; <span class="hljs-keyword">then</span><br>        JEMALLOC_PATH=<span class="hljs-string">&quot;/usr/lib/<span class="hljs-subst">$(uname -m)</span>-linux-gnu/libjemalloc.so&quot;</span><br>        JEMALLOC_FALLBACK=<span class="hljs-string">&quot;/usr/lib/x86_64-linux-gnu/libjemalloc.so&quot;</span><br>        <span class="hljs-keyword">if</span> [ -f <span class="hljs-string">&quot;<span class="hljs-variable">$JEMALLOC_PATH</span>&quot;</span> ]; <span class="hljs-keyword">then</span><br>            <span class="hljs-built_in">export</span> LD_PRELOAD=<span class="hljs-variable">$LD_PRELOAD</span>:<span class="hljs-variable">$JEMALLOC_PATH</span><br>        <span class="hljs-keyword">elif</span> [ -f <span class="hljs-string">&quot;<span class="hljs-variable">$JEMALLOC_FALLBACK</span>&quot;</span> ]; <span class="hljs-keyword">then</span><br>            <span class="hljs-built_in">export</span> LD_PRELOAD=<span class="hljs-variable">$LD_PRELOAD</span>:<span class="hljs-variable">$JEMALLOC_FALLBACK</span><br>        <span class="hljs-keyword">else</span><br>            <span class="hljs-keyword">if</span> [ <span class="hljs-string">&quot;<span class="hljs-variable">$JEMALLOC_PATH</span>&quot;</span> = <span class="hljs-string">&quot;<span class="hljs-variable">$JEMALLOC_FALLBACK</span>&quot;</span> ]; <span class="hljs-keyword">then</span><br>                MSG_PATH=<span class="hljs-variable">$JEMALLOC_PATH</span><br>            <span class="hljs-keyword">else</span><br>                MSG_PATH=<span class="hljs-string">&quot;<span class="hljs-variable">$JEMALLOC_PATH</span> and <span class="hljs-variable">$JEMALLOC_FALLBACK</span>&quot;</span><br>            <span class="hljs-keyword">fi</span><br>            <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;WARNING: attempted to load jemalloc from <span class="hljs-variable">$MSG_PATH</span> but the library couldn&#x27;t be found. glibc will be used instead.&quot;</span><br>        <span class="hljs-keyword">fi</span><br>    <span class="hljs-keyword">fi</span><br>&#125;<br><br>maybe_enable_jemalloc<br><br>copy_plugins_if_required<br><br>prepare_configuration<br><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;------------print flink-conf.yaml--------------------&quot;</span><br><span class="hljs-built_in">cat</span> <span class="hljs-variable">$CONF_FILE</span><br><span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;------------print flink-conf.yaml---end--------------&quot;</span><br><br>args=(<span class="hljs-string">&quot;<span class="hljs-variable">$@</span>&quot;</span>)<br><span class="hljs-keyword">if</span> [ <span class="hljs-string">&quot;<span class="hljs-variable">$1</span>&quot;</span> = <span class="hljs-string">&quot;help&quot;</span> ]; <span class="hljs-keyword">then</span><br>    <span class="hljs-built_in">printf</span> <span class="hljs-string">&quot;Usage: <span class="hljs-subst">$(basename <span class="hljs-string">&quot;<span class="hljs-variable">$0</span>&quot;</span>)</span> (jobmanager|<span class="hljs-variable">$&#123;COMMAND_STANDALONE&#125;</span>|taskmanager|<span class="hljs-variable">$&#123;COMMAND_HISTORY_SERVER&#125;</span>)\n&quot;</span><br>    <span class="hljs-built_in">printf</span> <span class="hljs-string">&quot;    Or <span class="hljs-subst">$(basename <span class="hljs-string">&quot;<span class="hljs-variable">$0</span>&quot;</span>)</span> help\n\n&quot;</span><br>    <span class="hljs-built_in">printf</span> <span class="hljs-string">&quot;By default, Flink image adopts jemalloc as default memory allocator. This behavior can be disabled by setting the &#x27;DISABLE_JEMALLOC&#x27; environment variable to &#x27;true&#x27;.\n&quot;</span><br>    <span class="hljs-built_in">exit</span> 0<br><span class="hljs-keyword">elif</span> [ <span class="hljs-string">&quot;<span class="hljs-variable">$1</span>&quot;</span> = <span class="hljs-string">&quot;jobmanager&quot;</span> ]; <span class="hljs-keyword">then</span><br>    args=(<span class="hljs-string">&quot;<span class="hljs-variable">$&#123;args[@]:1&#125;</span>&quot;</span>)<br><br>    <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Starting Job Manager&quot;</span><br><br>    <span class="hljs-built_in">exec</span> $(drop_privs_cmd) <span class="hljs-string">&quot;<span class="hljs-variable">$FLINK_HOME</span>/bin/jobmanager.sh&quot;</span> start-foreground <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;args[@]&#125;</span>&quot;</span><br><span class="hljs-keyword">elif</span> [ <span class="hljs-string">&quot;<span class="hljs-variable">$1</span>&quot;</span> = <span class="hljs-variable">$&#123;COMMAND_STANDALONE&#125;</span> ]; <span class="hljs-keyword">then</span><br>    args=(<span class="hljs-string">&quot;<span class="hljs-variable">$&#123;args[@]:1&#125;</span>&quot;</span>)<br><br>    <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Starting Job Manager&quot;</span><br><br>    <span class="hljs-built_in">exec</span> $(drop_privs_cmd) <span class="hljs-string">&quot;<span class="hljs-variable">$FLINK_HOME</span>/bin/standalone-job.sh&quot;</span> start-foreground <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;args[@]&#125;</span>&quot;</span><br><span class="hljs-keyword">elif</span> [ <span class="hljs-string">&quot;<span class="hljs-variable">$1</span>&quot;</span> = <span class="hljs-variable">$&#123;COMMAND_HISTORY_SERVER&#125;</span> ]; <span class="hljs-keyword">then</span><br>    args=(<span class="hljs-string">&quot;<span class="hljs-variable">$&#123;args[@]:1&#125;</span>&quot;</span>)<br><br>    <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Starting History Server&quot;</span><br><br>    <span class="hljs-built_in">exec</span> $(drop_privs_cmd) <span class="hljs-string">&quot;<span class="hljs-variable">$FLINK_HOME</span>/bin/historyserver.sh&quot;</span> start-foreground <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;args[@]&#125;</span>&quot;</span><br><span class="hljs-keyword">elif</span> [ <span class="hljs-string">&quot;<span class="hljs-variable">$1</span>&quot;</span> = <span class="hljs-string">&quot;taskmanager&quot;</span> ]; <span class="hljs-keyword">then</span><br>    args=(<span class="hljs-string">&quot;<span class="hljs-variable">$&#123;args[@]:1&#125;</span>&quot;</span>)<br><br>    <span class="hljs-built_in">echo</span> <span class="hljs-string">&quot;Starting Task Manager&quot;</span><br><br>    <span class="hljs-built_in">exec</span> $(drop_privs_cmd) <span class="hljs-string">&quot;<span class="hljs-variable">$FLINK_HOME</span>/bin/taskmanager.sh&quot;</span> start-foreground <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;args[@]&#125;</span>&quot;</span><br><span class="hljs-keyword">fi</span><br><br>args=(<span class="hljs-string">&quot;<span class="hljs-variable">$&#123;args[@]&#125;</span>&quot;</span>)<br><br><span class="hljs-comment"># Running command in pass-through mode</span><br><span class="hljs-built_in">exec</span> $(drop_privs_cmd) <span class="hljs-string">&quot;<span class="hljs-variable">$&#123;args[@]&#125;</span>&quot;</span><br><br></code></pre></td></tr></table></figure>
+
+<h2 id="pod-template-yaml"><a href="#pod-template-yaml" class="headerlink" title="pod-template.yaml"></a>pod-template.yaml</h2><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-attr">apiVersion:</span> <span class="hljs-string">v1</span><br><span class="hljs-attr">kind:</span> <span class="hljs-string">Pod</span><br><span class="hljs-attr">metadata:</span><br>  <span class="hljs-attr">name:</span> <span class="hljs-string">jobmanager-pod-template</span><br><span class="hljs-attr">spec:</span><br>  <span class="hljs-attr">containers:</span><br>    <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">flink-main-container</span><br>      <span class="hljs-attr">image:</span> <span class="hljs-number">192.168</span><span class="hljs-number">.12</span><span class="hljs-number">.101</span><span class="hljs-string">/dev/flink1.14.5-base:latest</span><br>      <span class="hljs-attr">securityContext:</span><br>        <span class="hljs-attr">privileged:</span> <span class="hljs-literal">true</span><br>      <span class="hljs-attr">env:</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AWS_S3_BUCKET</span><br>          <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;kt-volume&quot;</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">S3FS_ARGS</span><br>          <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;use_path_request_style,allow_other,no_check_certificate,umask=000,nonempty&quot;</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AWS_S3_ACCESS_KEY_ID</span><br>          <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;admin&quot;</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AWS_S3_SECRET_ACCESS_KEY</span><br>          <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;admin123&quot;</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AWS_S3_MOUNT</span><br>          <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;/mnt/kt-volume&quot;</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">AWS_S3_URL</span><br>          <span class="hljs-attr">value:</span> <span class="hljs-string">&quot;http://192.168.12.178:9000&quot;</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">TZ</span><br>          <span class="hljs-attr">value:</span> <span class="hljs-string">Asia/Shanghai</span><br>        <span class="hljs-bullet">-</span> <span class="hljs-attr">name:</span> <span class="hljs-string">FLINK_LIBS</span><br>          <span class="hljs-attr">value:</span> <span class="hljs-string">Asia/Shanghai</span><br><br></code></pre></td></tr></table></figure>
+
+<h1 id="Deploy-Flink-APP"><a href="#Deploy-Flink-APP" class="headerlink" title="Deploy Flink-APP"></a>Deploy Flink-APP</h1><p>submit cmd</p>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs sh"><span class="hljs-built_in">export</span> FLINK_CONF_DIR=/opt/flink-1.14.5/conf;<br>/opt/flink-1.14.5/bin/flink run-application \<br>--target kubernetes-application \<br>-Dkubernetes.cluster-id=app-001 \<br>-Dkubernetes.container.image=192.168.1.110/dev/flink1.14.5-base:latest \<br>-Dkubernetes.container.image.pull-policy=Always \<br>-Dkubernetes.pod-template-file=/opt/flink-1.14.5/pod-template.yml \<br>-Dkubernetes.namespace=rts \<br>-Dkubernetes.config.file=/mnt/kt-volume/resource/rts/k8s/conf/config \<br>-Dkubernetes.rest-service.exposed.type=NodePort \<br>-Dcontainerized.master.env.HADOOP_CLASSPATH=/opt/hadoop/hdfs-conf:/opt/flink-1.14.5/conf/flink-conf.yaml:/opt/flink-1.14.5/conf/log4j2.xml \<br>-Dcontainerized.master.env.kerberos_krb5=/opt/hadoop/hdfs-conf/krb5.conf \<br>-Dcontainerized.taskmanager.env.HADOOP_CLASSPATH=/opt/hadoop/hdfs-conf:/opt/flink-1.14.5/conf/flink-conf.yaml:/opt/flink-1.14.5/conf/log4j2.xml \<br>-Dcontainerized.taskmanager.env.kerberos_krb5=/opt/hadoop/hdfs-conf/krb5.conf \<br>-Dclassloader.resolve-order=parent-first \<br>-Dsecurity.kerberos.login.principal=hive/cdh-100@KEENDATA.COM \<br>-Dsecurity.kerberos.login.use-ticket-cache=<span class="hljs-literal">true</span> \<br>-Dsecurity.kerberos.login.keytab=/opt/hadoop/hdfs-conf/hive100.keytab \<br>-D<span class="hljs-string">&#x27;$internal.pipeline.job-id&#x27;</span>=629ff7a21c24f10998f66e46d63bc2d3 \<br>-c com.keendata.rts.SyncSink \<br><span class="hljs-built_in">local</span>:///mnt/kt-volume/resource/rts/rts-sink-2.3-SNAPSHOT.jar -job /mnt/kt-volume/resource/temp/tmpjson/kafka_hive_iceberg.json \<br>-taskId 1669239192347009000 -mode INITIAL -jobName kafka_hive_iceberg \<br>-principal hive/cdh-100@KEENDATA.COM -keytabPath /opt/hadoop/hdfs-conf/hive100.keytab \<br>-krb5Conf /opt/hadoop/hdfs-conf/krb5.conf -useLocalFile <span class="hljs-literal">true</span><br></code></pre></td></tr></table></figure>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Flink/" class="category-chain-item">Flink</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Flink On K8S 实践分享</div>
+      <div>https://e-miao.github.io/flink/Flink On K8S 实践分享/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>e-miao</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年8月6日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/flink/2024-06-27-Postgres%E5%BC%80%E5%90%AFcdc%E5%90%8C%E6%AD%A5%E9%85%8D%E7%BD%AE/" title="Postgres开启Flink-CDC同步配置">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Postgres开启Flink-CDC同步配置</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/flink/Mysql-Flink-Hudi%E6%95%B0%E6%8D%AE%E5%90%8C%E6%AD%A5/" title="Mysql-Flink-Hudi数据同步">
+                        <span class="hidden-mobile">Mysql-Flink-Hudi数据同步</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"e-miao/blog-comments","repo-id":"R_kgDOJKc4zQ","category":"Announcements","category-id":"DIC_kwDOJKc4zc4CU61N","theme-light":"light","theme-dark":"dark","mapping":"og:title","reactions-enabled":1,"emit-metadata":0,"input-position":"top","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
